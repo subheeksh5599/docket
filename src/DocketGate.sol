@@ -41,8 +41,10 @@ contract DocketGate {
     error WrongIntent(uint256 jobId);
     error AnswerNotAccepted(bytes32 answerHash);
     error ActionAlreadyExecuted();
+    error ZeroRegistry();
 
     constructor(address registry_, bytes32 requiredIntent_) {
+        if (registry_ == address(0)) revert ZeroRegistry();
         registry = registry_;
         owner = msg.sender;
         requiredIntent = requiredIntent_;

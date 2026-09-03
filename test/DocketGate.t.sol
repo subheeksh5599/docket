@@ -130,4 +130,9 @@ contract DocketGateTest is Test {
         assertEq(address(gate.registry()), address(registry));
         assertEq(gate.requiredIntent(), CRYPTO_PRICE);
     }
+
+    function test_gate_constructor_zeroRegistry_reverts() public {
+        vm.expectRevert(DocketGate.ZeroRegistry.selector);
+        new DocketGate(address(0), CRYPTO_PRICE);
+    }
 }
