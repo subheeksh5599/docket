@@ -75,7 +75,7 @@ export default function ReceiptsPage({ wallet }) {
   const FILTERS = ['All', 'Pending', 'Resolved', 'My receipts'];
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto', padding: 'clamp(32px, 5vw, 56px) 24px 0' }}>
+    <div style={{ padding: 'clamp(8px, 1vw, 12px) 0 24px' }}>
       {/* header */}
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 34, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Receipts</h1>
       <p style={{ marginTop: 6, fontSize: 13.5, color: 'var(--muted)' }}>

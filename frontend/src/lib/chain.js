@@ -74,6 +74,18 @@ export async function fetchUserJobCount(address) {
   } catch { return 0; }
 }
 
+/// The wallet's most recent job id (the job just created).
+export async function fetchLatestJobId(address) {
+  const n = await publicClient.readContract({
+    address: REGISTRY, abi: registryAbi, functionName: 'jobCount', args: [address],
+  });
+  if (!n) return null;
+  const last = await publicClient.readContract({
+    address: REGISTRY, abi: registryAbi, functionName: 'jobsOf', args: [address, n - 1n],
+  });
+  return Number(last);
+}
+
 /// keccak256 of the raw intent string — the canonical rule used by live receipts
 /// (verified: job #28 on-chain intentId 0x2a50af6c… == keccak256("CRYPTO_PRICE")).
 export function intentIdOf(intentName) {

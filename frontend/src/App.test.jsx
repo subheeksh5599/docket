@@ -13,11 +13,8 @@ vi.mock('./lib/chain', () => ({
   publicClient: { readContract: vi.fn().mockResolvedValue(0n) },
 }));
 
-vi.mock('./pages/HomePage', () => ({ default: () => <div>HOME-PAGE</div> }));
-vi.mock('./pages/ReceiptsPage', () => ({ default: () => <div>RECEIPTS-PAGE</div> }));
-vi.mock('./pages/ReceiptDetail', () => ({ default: ({ jobId }) => <div>RECEIPT-DETAIL:{jobId}</div> }));
-vi.mock('./pages/VerifyPage', () => ({ default: () => <div>VERIFY-PAGE</div> }));
-vi.mock('./pages/HowItWorks', () => ({ default: () => <div>HOW-IT-WORKS</div> }));
+vi.mock('./pages/LandingPage', () => ({ default: () => <div>LANDING-PAGE</div> }));
+vi.mock('./pages/Dashboard', () => ({ default: ({ tab, receiptId }) => <div>DASHBOARD:{tab}{receiptId ? `:${receiptId}` : ''}</div> }));
 
 import App from './App';
 
@@ -26,38 +23,44 @@ describe('App hash routing', () => {
     window.location.hash = '';
   });
 
-  it('renders the home page by default', () => {
+  it('renders the landing page by default', () => {
     render(<App />);
-    expect(screen.getByText('HOME-PAGE')).toBeTruthy();
+    expect(screen.getByText('LANDING-PAGE')).toBeTruthy();
   });
 
-  it('renders the receipts page at #/receipts', () => {
+  it('renders the dashboard at #/dashboard', () => {
+    window.location.hash = '#/dashboard';
+    render(<App />);
+    expect(screen.getByText('DASHBOARD:record')).toBeTruthy();
+  });
+
+  it('renders a dashboard tab at #/dashboard/receipts', () => {
+    window.location.hash = '#/dashboard/receipts';
+    render(<App />);
+    expect(screen.getByText('DASHBOARD:receipts')).toBeTruthy();
+  });
+
+  it('renders a receipt permalink at #/r/:id', () => {
+    window.location.hash = '#/r/28';
+    render(<App />);
+    expect(screen.getByText('DASHBOARD:receipt:28')).toBeTruthy();
+  });
+
+  it('legacy #/receipt/:id routes to the dashboard receipt tab', () => {
+    window.location.hash = '#/receipt/24';
+    render(<App />);
+    expect(screen.getByText('DASHBOARD:receipt:24')).toBeTruthy();
+  });
+
+  it('legacy #/receipts routes to the dashboard receipts tab', () => {
     window.location.hash = '#/receipts';
     render(<App />);
-    expect(screen.getByText('RECEIPTS-PAGE')).toBeTruthy();
+    expect(screen.getByText('DASHBOARD:receipts')).toBeTruthy();
   });
 
-  it('renders a single receipt at #/receipt/:id (permalink)', () => {
-    window.location.hash = '#/receipt/28';
-    render(<App />);
-    expect(screen.getByText('RECEIPT-DETAIL:28')).toBeTruthy();
-  });
-
-  it('renders the verify page at #/verify', () => {
-    window.location.hash = '#/verify';
-    render(<App />);
-    expect(screen.getByText('VERIFY-PAGE')).toBeTruthy();
-  });
-
-  it('renders how-it-works at #/how', () => {
-    window.location.hash = '#/how';
-    render(<App />);
-    expect(screen.getByText('HOW-IT-WORKS')).toBeTruthy();
-  });
-
-  it('falls back to home for unknown routes', () => {
+  it('falls back to landing for unknown routes', () => {
     window.location.hash = '#/nonsense';
     render(<App />);
-    expect(screen.getByText('HOME-PAGE')).toBeTruthy();
+    expect(screen.getByText('LANDING-PAGE')).toBeTruthy();
   });
 });

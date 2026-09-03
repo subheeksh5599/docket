@@ -59,7 +59,7 @@ export default function VerifyPage() {
     : [];
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(40px, 6vw, 64px) 24px 0' }}>
+    <div style={{ padding: 'clamp(8px, 1vw, 12px) 0 24px' }}>
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 34, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Verify a DOCKET receipt</h1>
       <p style={{ marginTop: 6, fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}>
         Paste a receipt id. The check runs directly against the Base Sepolia registry — no DOCKET server involved.

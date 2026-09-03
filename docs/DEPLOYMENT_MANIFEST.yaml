@@ -63,7 +63,7 @@ Golden_receipt_31:
   jobId: 31
   wallet: 0x3750d9d7A049F1B14e4d3e9F8b6a1528c8149Ec4
   intent: WEATHER_CHECK (0x35b355e67b358906a7d64d7d727d0f33c1a465dd7508b3dc8e569ec46f231eaa)
-  question: "What is the weather right now in Bengaluru, India?"
+  question: "What is the weather right now in Bengaluru?"
   questionHash: 0x44ef94da0c9613a35ed5fcc9d0d8275bd794f5f8bea7bd3b47dae7880011bf36
   answerHash: 0x912f817abbc94f303cb8b06f73b822732af126e2c6f4ec5b61c05c0e6ef68022
   resolveTx: 0x92edb98f0f7e10c26e1b1273d3e336dbaaa3bad04de7ec205df3fadf16aaa3fa

@@ -26,7 +26,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(40px, 6vw, 64px) 24px 0' }}>
+    <div style={{ padding: 'clamp(8px, 1vw, 12px) 0 24px' }}>
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 34, letterSpacing: '-0.02em', color: 'var(--ink)' }}>How it works</h1>
       <p style={{ marginTop: 6, fontSize: 13.5, color: 'var(--muted)', maxWidth: 640, lineHeight: 1.7 }}>
         DOCKET is not pretending to be Telegraph. It is an application layer around Telegraph's real

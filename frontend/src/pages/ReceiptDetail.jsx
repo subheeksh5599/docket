@@ -73,7 +73,7 @@ export default function ReceiptDetail({ jobId }) {
   const ts = receipt.createdAt ? new Date(Number(receipt.createdAt) * 1000) : null;
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(32px, 5vw, 56px) 24px 0' }}>
+    <div style={{ padding: 'clamp(8px, 1vw, 12px) 0 24px' }}>
       {/* ---- HEADER ---- */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 36, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
