@@ -95,17 +95,33 @@ describe('canonicalAnswerHash', () => {
   });
 
   it('matches the reference implementation for a fixed vector', () => {
-    // reference: keccak of abi.encode(address[],uint256[],string[],bool[])
+    // reference: keccak of abi.encode of the OnChainData STRUCT = nested tuple
     const resp = { strings: ['fixed-vector'] };
     const expected = keccak256(
-      encodeAbiParameters(parseAbiParameters('address[], uint256[], string[], bool[]'), [
-        [],
-        [],
-        ['fixed-vector'],
-        [],
+      encodeAbiParameters(parseAbiParameters('(address[], uint256[], string[], bool[])'), [
+        [[], [], ['fixed-vector'], []],
       ])
     );
     expect(canonicalAnswerHash(resp)).toBe(expected);
+  });
+
+  it('reproduces the LIVE on-chain answerHash for receipt #28 (Base Sepolia)', () => {
+    // The real callback payload decoded from the resolving tx 0x405057ec…
+    // (miner's actual answer for job #28, incl. the 1e18 integer payment field).
+    // Stored on-chain as answerHash 0x23d1c6ef… and reproduced here byte-exact.
+    const LONG =
+      'summary:I cannot look up this transaction because no transaction hash was supplied. A transaction hash is 66 characters long: "0x" followed by 64 hexadecimal characters. Pass one as the tx_hash parameter and I will report its confirmation status, block, sender, recipient, value in ETH, and decoded contract method.';
+    const ANS =
+      'answer:I cannot look up this transaction because no transaction hash was supplied. A transaction hash is 66 characters long: "0x" followed by 64 hexadecimal characters. Pass one as the tx_hash parameter and I will report its confirmation status, block, sender, recipient, value in ETH, and decoded contract method.';
+    const resp = {
+      addresses: [],
+      integers: ['1000000000000000000'],
+      strings: ['status:invalid_input', LONG, 'confidence', ANS],
+      bools: [],
+    };
+    expect(canonicalAnswerHash(resp)).toBe(
+      '0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2'
+    );
   });
 });
 

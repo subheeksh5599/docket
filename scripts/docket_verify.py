@@ -178,15 +178,16 @@ def _keccak256(hexstr):
     raise RuntimeError("cast keccak failed")
 
 def _encode_abi_dynamic(items):
-    # Minimal ABI encoder for OnChainData = (address[], uint256[], string[], bool[]).
-    # Each dynamic array tail = uint256 length word + element data. Empty arrays still
-    # occupy their 32-byte length word. Matches viem/abi.encode exactly (verified
-    # against viem for the ['hello'] vector).
+    # Minimal ABI encoder for OnChainData STRUCT hashed as keccak256(abi.encode(struct)).
+    # Solidity encodes a struct arg as a nested tuple: head = 4 offset words (one per
+    # dynamic array), each offset RELATIVE TO THE START OF THE TUPLE HEAD; tails follow.
+    # Matches Solidity abi.encode(OnChainData) exactly — verified LIVE against receipt
+    # #24/#28 (recomputed hash 0x23d1c6ef… == stored answerHash).
     def enc_array_strings(arr):
         out = len(arr).to_bytes(32, "big")
         if not arr:
             return out
-        # inner head: len(arr) * 32-byte offsets to each string
+        # inner head: len(arr) * 32-byte offsets to each string, relative to after count
         heads = b""
         tails = b""
         acc = 32 * len(arr)
@@ -216,17 +217,22 @@ def _encode_abi_dynamic(items):
             out += (1 if v else 0).to_bytes(32, "big")
         return out
 
-    # tails for each array in struct order (address[], uint256[], string[], bool[])
+    # tails in struct order (address[], uint256[], string[], bool[])
     tails = [enc_array_addresses(items.get("addresses", [])),
              enc_array_uints(items.get("integers", [])),
              enc_array_strings(items.get("strings", [])),
              enc_array_bools(items.get("bools", []))]
+    # Solidity abi.encode(struct) treats the struct as a dynamic component: a leading
+    # offset word (0x20 = 32) points at the tuple head. Inside the head, the 4 array
+    # offsets are measured from the STRUCT HEAD START (byte 32 of the whole encoding),
+    # i.e. acc starts at 128 (4 head words). Matches viem byte-for-byte (verified
+    # live against receipt #28's stored answerHash 0x23d1c6ef…).
     heads = b""
-    acc = 128
+    acc = 128  # tuple head: 4 offset words
     for t in tails:
         heads += acc.to_bytes(32, "big")
         acc += len(t)
-    return heads + b"".join(tails)
+    return (32).to_bytes(32, "big") + heads + b"".join(tails)
 
 def canonical_onchain_hash(payload):
     """keccak256(abi.encode(OnChainData)) with OnChainData = (address[],uint256[],string[],bool[])."""
