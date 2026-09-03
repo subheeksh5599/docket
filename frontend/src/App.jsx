@@ -110,7 +110,7 @@ export default function App() {
                 Protocol-originated receipts for Telegraph inference.
               </div>
             </div>
-            <FooterCol title="Product" links={[['Dashboard', 'dashboard'], ['Receipts', 'dashboard/receipts'], ['Verify', 'dashboard/verify'], ['How it works', 'how']]} go={go} />
+            <FooterCol title="Product" links={[['Dashboard', 'dashboard'], ['Receipts', 'dashboard/receipts'], ['Verify', 'dashboard/verify'], ['Act on a receipt', 'dashboard/gate'], ['How it works', 'how']]} go={go} />
             <FooterCol title="Network" links={[['Telegraph', 'https://telegraphprotocol.com'], ['Base Sepolia', 'https://sepolia.basescan.org'], ['ERC-8183', 'https://eips.ethereum.org/EIPS/eip-8183']]} go={go} external />
             <div>
               <div className="label" style={{ color: 'var(--faint)', marginBottom: 8 }}>STATUS</div>

@@ -35,6 +35,8 @@ describe('VerifyPage', () => {
     expect(screen.getByText(/receipt exists on-chain/i)).toBeTruthy();
     expect(screen.getByText(/receipt is locked/i)).toBeTruthy();
     expect(screen.getByText(/telegraph job resolved/i)).toBeTruthy();
+    expect(screen.getByText(/MACHINE-READABLE RESULT/i)).toBeTruthy();
+    expect(screen.getByText(/"verified": true/)).toBeTruthy();
   });
 
   it('reports when the pasted answer does not match the commitment', async () => {

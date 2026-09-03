@@ -106,6 +106,26 @@ export default function VerifyPage() {
             <span className="label" style={{ color: 'var(--loss)' }}>✕ {result.error}</span>
           </div>
         )}
+
+        {/* machine-readable result — for agents */}
+        {state === 'done' && result && (
+          <div style={{ marginTop: 14 }}>
+            <div className="label" style={{ fontSize: 9, color: 'var(--faint)', letterSpacing: '0.2em', marginBottom: 6 }}>MACHINE-READABLE RESULT (FOR AGENTS)</div>
+            <pre style={{
+              margin: 0, padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--line)',
+              borderRadius: 'var(--radius)', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink)',
+              overflow: 'auto', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+            }}>
+{JSON.stringify({
+  receipt: result.jobId,
+  resolved: result.checks?.resolved ?? false,
+  locked: result.checks?.locked ?? false,
+  answerHash: result.answerHash,
+  verified: result.pass,
+}, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'center' }}>

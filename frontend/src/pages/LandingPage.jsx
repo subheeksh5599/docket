@@ -95,6 +95,7 @@ function Typewriter({ text, speed = 30 }) {
 export default function LandingPage({ wallet, go }) {
   const [hovered, setHovered] = useState(null);
   const [liveReceipt, setLiveReceipt] = useState(null);
+  const [metrics, setMetrics] = useState(null);
   const active = hovered ? SPONSOR_COPY[hovered] : DEFAULT;
   const swapKey = hovered ?? 'default';
   const evidenceRef = useRef(null);
@@ -105,6 +106,10 @@ export default function LandingPage({ wallet, go }) {
     fetchReceipt(LIVE_RECEIPT_ID)
       .then((r) => { if (live) setLiveReceipt(r); })
       .catch(() => { /* the proof band hides when the chain read fails */ });
+    // live usage totals for the "N receipts minted" line — chain-derived only
+    import('../lib/chain').then(({ fetchMetrics }) =>
+      fetchMetrics().then((m) => { if (live) setMetrics(m); }).catch(() => {})
+    );
     return () => { live = false; };
   }, []);
 
@@ -213,9 +218,25 @@ export default function LandingPage({ wallet, go }) {
           ))}
         </div>
 
-      {/* ---- LIVE PROOF — a real receipt, read live from the chain ---- */}
+      {/* ---- LIVE PROOF — real usage + a real receipt, read live from the chain ---- */}
+      {metrics?.records != null && (
+        <div className="panel" style={{ marginTop: 64, padding: '18px 22px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderColor: 'color-mix(in oklch, var(--gain) 40%, var(--line))' }}>
+          <div>
+            <div className="tnum" style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.1 }}>
+              {metrics.resolved} receipt{metrics.resolved === 1 ? '' : 's'} minted on Base Sepolia
+            </div>
+            <div className="label" style={{ fontSize: 9, color: 'var(--faint)', marginTop: 4, letterSpacing: '0.1em' }}>
+              {metrics.wallets} UNIQUE WALLET{metrics.wallets === 1 ? '' : 'S'} · {metrics.intents} INTENT{metrics.intents === 1 ? '' : 'S'} · ${metrics.jobValue != null ? (metrics.jobValue / 1e6).toFixed(2) : '—'} USDC ROUTED — EVERY RECORD ORIGINATES FROM A REAL TELEGRAPH JOB
+            </div>
+          </div>
+          <div className="label" style={{ fontSize: 9, color: 'var(--faint)', maxWidth: 260, lineHeight: 1.7, textTransform: 'none', letterSpacing: '0.02em' }}>
+            the frontend is a viewer. the chain is the record — there is no DOCKET database to trust or hack.
+          </div>
+        </div>
+      )}
+
       {liveReceipt && (
-        <div style={{ marginTop: 64 }}>
+        <div style={{ marginTop: 24 }}>
           <div className="term-feed-head">
             <span>It works — a live receipt <span className="flick" style={{ color: 'var(--signal)' }}>●</span></span>
             <span className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>READ FROM BASE SEPOLIA</span>

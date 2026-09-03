@@ -163,20 +163,43 @@ async function getLogsChunked(from, to) {
   return out;
 }
 
+/// Known intent hashes → names (public protocol constants, verified live on the
+/// registry — see docs/DEPLOYMENT_MANIFEST.yaml + docs/TELEGRAPH_DEPLOYMENT.md).
+const INTENT_NAMES = {
+  '0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a': 'CRYPTO_PRICE',
+  '0x3db9dfa99f2319adb30c5860240fd78a91663b355591ab2083c86a26aad04e7d': 'GAS_PRICE',
+  '0x35b355e67b358906a7d64d7d727d0f33c1a465dd7508b3dc8e569ec46f231eaa': 'WEATHER_CHECK',
+};
+export function intentNameOf(hash) {
+  return INTENT_NAMES[hash] || (hash ? hash.slice(0, 10) + '…' : '—');
+}
+
 /// Live protocol metrics — every number is a real chain read (no fake counters).
 /// Scans ALL ReceiptMinted logs since the registry deployment (chunked), so the
 /// counts are permanent totals, not a time window.
 export async function fetchMetrics() {
-  const out = { records: null, resolved: null, wallets: null, jobValue: null, intents: null };
+  const out = { records: null, resolved: null, wallets: null, jobValue: null, intents: null, byIntent: [], returningUsers: null };
   if (!REGISTRY) return out;
   try {
     const latest = await publicClient.getBlockNumber();
     const logs = await getLogsChunked(46290000n, latest);
+    const perWallet = new Map(); // owner -> count
+    const perIntent = new Map(); // intentHash -> count
+    for (const l of logs) {
+      const o = l.args.owner.toLowerCase();
+      perWallet.set(o, (perWallet.get(o) || 0) + 1);
+      const ih = l.args.intentId;
+      perIntent.set(ih, (perIntent.get(ih) || 0) + 1);
+    }
     out.records = logs.length;
-    out.wallets = new Set(logs.map((l) => l.args.owner.toLowerCase())).size;
-    out.intents = new Set(logs.map((l) => l.args.intentId)).size;
+    out.wallets = perWallet.size;
+    out.intents = perIntent.size;
     out.resolved = logs.length; // all minted receipts resolved
     out.jobValue = logs.length * 1_000_000; // jobBasePrice USDC μ-units per job
+    out.returningUsers = [...perWallet.values()].filter((c) => c > 1).length;
+    out.byIntent = [...perIntent.entries()]
+      .map(([hash, count]) => ({ intent: intentNameOf(hash), hash, count }))
+      .sort((a, b) => b.count - a.count);
   } catch { /* metrics show '—' when reads fail */ }
   return out;
 }

@@ -5,14 +5,18 @@ import RecordPanel from './RecordPanel';
 import ReceiptsPage from './ReceiptsPage';
 import ReceiptDetail from './ReceiptDetail';
 import VerifyPage from './VerifyPage';
+import DocketGatePage from './DocketGatePage';
+import UsagePanel from '../components/UsagePanel';
 
 // Dashboard — the app shell. Persistent left sidebar for Record / Receipts /
-// Verify; the main column renders the active tab. Header + footer live in App.
+// Verify / Act on a receipt; the main column renders the active tab.
+// Header + footer live in App.
 
 const TABS = [
   ['record', 'Record'],
   ['receipts', 'Receipts'],
   ['verify', 'Verify'],
+  ['gate', 'Act on a receipt'],
 ];
 
 export default function Dashboard({ wallet, tab, receiptId, go }) {
@@ -69,7 +73,7 @@ export default function Dashboard({ wallet, tab, receiptId, go }) {
                     }}
                   >
                     <span style={{ color: isActive ? 'var(--signal)' : 'var(--faint)', fontSize: 12, width: 14, flexShrink: 0 }}>
-                      {key === 'record' ? '⌗' : key === 'receipts' ? '▤' : '✓'}
+                      {key === 'record' ? '⌗' : key === 'receipts' ? '▤' : key === 'verify' ? '✓' : '⚿'}
                     </span>
                     {label}
                   </button>
@@ -120,9 +124,23 @@ export default function Dashboard({ wallet, tab, receiptId, go }) {
             ? <ReceiptDetail jobId={receiptId} go={go} />
             : activeTab === 'verify'
               ? <VerifyPage />
-              : activeTab === 'receipts'
-                ? <ReceiptsPage wallet={wallet} go={go} />
-                : <RecordPanel wallet={wallet} go={go} />}
+              : activeTab === 'gate'
+                ? <DocketGatePage />
+                : activeTab === 'receipts'
+                  ? <ReceiptsPage wallet={wallet} go={go} />
+                  : (
+                    <>
+                      <RecordPanel wallet={wallet} go={go} />
+                      {/* usage stats below the ask panel — same real chain reads */}
+                      <div style={{ marginTop: 22 }}>
+                        <div className="term-feed-head">
+                          <span>Live on-chain usage</span>
+                          <span className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>READ FROM BASE SEPOLIA</span>
+                        </div>
+                        <UsagePanel />
+                      </div>
+                    </>
+                  )}
         </div>
       </div>
     </div>

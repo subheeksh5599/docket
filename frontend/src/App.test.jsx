@@ -40,6 +40,12 @@ describe('App hash routing', () => {
     expect(screen.getByText('DASHBOARD:receipts')).toBeTruthy();
   });
 
+  it('renders the act-on-a-receipt tab at #/dashboard/gate', () => {
+    window.location.hash = '#/dashboard/gate';
+    render(<App />);
+    expect(screen.getByText('DASHBOARD:gate')).toBeTruthy();
+  });
+
   it('renders a receipt permalink at #/r/:id', () => {
     window.location.hash = '#/r/28';
     render(<App />);

@@ -106,12 +106,35 @@ export default function ReceiptDetail({ jobId }) {
       {/* ---- PROVENANCE ---- */}
       <div className="panel" style={{ marginTop: 14, padding: '8px 22px 12px' }}>
         <div className="label" style={{ padding: '12px 0 4px', fontSize: 9, letterSpacing: '0.22em' }}>PROVENANCE</div>
-        <Row k="Question (commitment)" v={short(receipt.questionHash)} mono />
-        <Row k="Intent" v={short(receipt.intentId)} mono />
+        <Row k="Question (commitment)" v={receipt.questionHash} mono copyable />
+        <Row k="Intent" v={receipt.intentId} mono copyable />
         <Row k="Job" v={`#${receipt.jobId?.toString?.() ?? jobId}`} href={explorerTx(receipt.jobId?.toString?.())} linkLabel="view on explorer" />
-        <Row k="Registry" v={short(REGISTRY)} href={explorerAddress(REGISTRY)} linkLabel="view on explorer" />
+        <Row k="Registry" v={REGISTRY} mono copyable href={explorerAddress(REGISTRY)} linkLabel="view on explorer" />
         <Row k="Chain" v="Base Sepolia (84532)" />
         <Row k="Block / Timestamp" v={ts ? `${ts.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} · ${ts.toISOString().slice(11, 19)} UTC` : '—'} mono />
+      </div>
+
+      {/* ---- WHY THIS RECEIPT IS VALID ---- */}
+      <div className="panel" style={{ marginTop: 14, padding: '12px 22px 16px', borderColor: 'color-mix(in oklch, var(--gain) 30%, var(--line))' }}>
+        <div className="label" style={{ padding: '8px 0 6px', fontSize: 9, letterSpacing: '0.22em' }}>WHY THIS RECEIPT IS VALID</div>
+        {[
+          ['Question committed before resolution', checks.askBound, 'questionHash non-zero, bound at request time — before the network saw it'],
+          ['Job exists on Telegraph', checks.exists, 'registry state carries a real job id on the protocol'],
+          ['Resolver callback came from the Diamond', checks.exists, 'only the Telegraph Diamond can mint (onlyDiamond guard in source)'],
+          ['Receipt is locked', checks.immutable, 'no update function and no delete function exist in the contract'],
+          ['Answer commitment present and non-zero', checks.resolved, 'resolved on-chain — the network answered and escrow settled'],
+        ].map(([title, ok, why]) => (
+          <div key={title} className="stat-row" style={{ gap: 12, padding: '7px 0' }}>
+            <span style={{ color: ok ? 'var(--gain)' : 'var(--loss)', fontFamily: 'var(--font-mono)', fontSize: 14, width: 18, flexShrink: 0 }}>{ok ? '✓' : '✕'}</span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{title}</span>
+            <span className="label" style={{ fontSize: 9, color: 'var(--faint)', textTransform: 'none', letterSpacing: '0.02em', lineHeight: 1.5 }}>{why}</span>
+          </div>
+        ))}
+        {pass && (
+          <div className="label" style={{ marginTop: 6, paddingTop: 10, borderTop: '1px solid var(--line)', fontSize: 9, color: 'var(--gain)' }}>
+            all checks pass — this receipt is independently verifiable from the chain; nothing above trusts the DOCKET website.
+          </div>
+        )}
       </div>
 
       {/* ---- CRYPTOGRAPHIC INTEGRITY ---- */}
@@ -168,7 +191,15 @@ export default function ReceiptDetail({ jobId }) {
   );
 }
 
-function Row({ k, v, mono, href, linkLabel }) {
+function Row({ k, v, mono, href, linkLabel, copyable }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(String(v)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    }).catch(() => {});
+  };
   return (
     <div className="stat-row" style={{ gap: 16 }}>
       <span className="stat-k" style={{ flexShrink: 0, width: 170 }}>{k}</span>
@@ -176,6 +207,16 @@ function Row({ k, v, mono, href, linkLabel }) {
         <a className="link tnum" style={{ fontSize: 12.5, wordBreak: 'break-all' }} href={href} target="_blank" rel="noreferrer">{v} · {linkLabel || '↗'}</a>
       ) : (
         <span className="stat-v" style={{ fontSize: 12.5, wordBreak: 'break-all' }}>{v}</span>
+      )}
+      {copyable && (
+        <button
+          onClick={copy}
+          className="label"
+          style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0, fontSize: 9, color: copied ? 'var(--gain)' : 'var(--signal)', textDecoration: 'underline', textUnderlineOffset: 2, flexShrink: 0, marginLeft: 'auto' }}
+          title={`copy ${k.toLowerCase()}`}
+        >
+          {copied ? '✓ copied' : 'copy'}
+        </button>
       )}
     </div>
   );

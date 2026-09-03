@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { REGISTRY, fetchRecentReceipts, fetchUserJobCount } from '../lib/chain';
+import { REGISTRY, fetchRecentReceipts, fetchUserJobCount, intentNameOf } from '../lib/chain';
 import { fetchJobIdAt } from '../lib/registryFeed';
 import { receiptPermalink, explorerTx } from '../lib/evidence';
 
 // Receipts — an Etherscan-style index of permanent records. Search + filters
-// over live chain reads. Row: id, question (hash), status, job, wallet, date.
+// over live chain reads. Row: id, intent, question hash, status, share, date.
 
 const short = (s) => (s ? String(s).slice(0, 6) + '…' + String(s).slice(-4) : '—');
 const timeAgo = (ts) => {
@@ -82,6 +82,13 @@ export default function ReceiptsPage({ wallet }) {
         Permanent records produced by Telegraph jobs. {REGISTRY ? '' : '— registry env unset.'}
       </p>
 
+      {/* live count — the adoption line */}
+      {!loading && all && all.length > 0 && (
+        <div className="label" style={{ marginTop: 14, fontSize: 9, color: 'var(--gain)', letterSpacing: '0.08em' }}>
+          {all.length} receipt{all.length === 1 ? '' : 's'} minted on Base Sepolia — every record below originates from a real Telegraph job.
+        </div>
+      )}
+
       {/* search + filters */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 22, alignItems: 'center' }}>
         <div className="term-search" style={{ flex: '1 1 260px' }}>
@@ -120,25 +127,44 @@ export default function ReceiptsPage({ wallet }) {
         {!loading && shown.length > 0 && (
           <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
             <div style={{ display: 'flex', gap: 12, padding: '10px 16px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', alignItems: 'center' }}>
-              <span className="label" style={{ width: 52, flexShrink: 0, fontSize: 9 }}>ID</span>
+              <span className="label" style={{ width: 46, flexShrink: 0, fontSize: 9 }}>ID</span>
+              <span className="label" style={{ width: 96, flexShrink: 0, fontSize: 9 }}>INTENT</span>
               <span className="label" style={{ flex: 1, fontSize: 9 }}>QUESTION (COMMITMENT)</span>
-              <span className="label" style={{ width: 90, flexShrink: 0, fontSize: 9 }}>STATUS</span>
-              <span className="label" style={{ width: 120, flexShrink: 0, fontSize: 9, display: 'none', '@media(min-width:700px)': {} }}>SOURCE</span>
-              <span className="label" style={{ width: 96, flexShrink: 0, fontSize: 9, textAlign: 'right' }}>DATE</span>
+              <span className="label" style={{ width: 78, flexShrink: 0, fontSize: 9 }}>STATUS</span>
+              <span className="label" style={{ width: 74, flexShrink: 0, fontSize: 9, textAlign: 'right' }}>DATE</span>
+              <span className="label" style={{ width: 56, flexShrink: 0, fontSize: 9, textAlign: 'right' }}>SHARE</span>
             </div>
             {shown.map((r) => (
-              <a key={r.jobId} href={receiptPermalink(r.jobId)} style={{ display: 'flex', gap: 12, padding: '13px 16px', borderBottom: '1px solid var(--line)', alignItems: 'center', textDecoration: 'none', transition: 'background .12s' }}>
-                <span className="tnum" style={{ width: 52, flexShrink: 0, fontSize: 12.5, color: 'var(--ink)' }}>#{r.jobId}</span>
-                <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {short(r.questionHash)}
-                </span>
-                <span className="label" style={{ width: 90, flexShrink: 0, fontSize: 9, color: r.resolved ? 'var(--gain)' : 'var(--signal)' }}>
-                  {r.resolved ? 'RESOLVED' : 'PENDING'}
-                </span>
-                <span className="label tnum" style={{ width: 96, flexShrink: 0, fontSize: 9, color: 'var(--faint)', textAlign: 'right' }}>
-                  {timeAgo(r.createdAt)}
-                </span>
-              </a>
+              <div key={r.jobId} style={{ display: 'flex', gap: 12, padding: '13px 16px', borderBottom: '1px solid var(--line)', alignItems: 'center' }}>
+                <a href={receiptPermalink(r.jobId)} style={{ textDecoration: 'none', display: 'contents' }}>
+                  <span className="tnum" style={{ width: 46, flexShrink: 0, fontSize: 12.5, color: 'var(--ink)' }}>#{r.jobId}</span>
+                  <span className="label tnum" style={{ width: 96, flexShrink: 0, fontSize: 9, color: 'var(--faint)', letterSpacing: '0.04em' }}>{intentNameOf(r.intentId)}</span>
+                  <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {short(r.questionHash)}
+                  </span>
+                  <span className="label" style={{ width: 78, flexShrink: 0, fontSize: 9, color: r.resolved ? 'var(--gain)' : 'var(--signal)' }}>
+                    {r.resolved ? 'RESOLVED' : 'PENDING'}
+                  </span>
+                  <span className="label tnum" style={{ width: 74, flexShrink: 0, fontSize: 9, color: 'var(--faint)', textAlign: 'right' }}>
+                    {timeAgo(r.createdAt)}
+                  </span>
+                </a>
+                <button
+                  onClick={() => {
+                    const url = window.location.origin + receiptPermalink(r.jobId);
+                    navigator.clipboard?.writeText(url).then(() => {
+                      const el = document.getElementById('share-' + r.jobId);
+                      if (el) { el.textContent = '✓'; setTimeout(() => { el.textContent = 'share'; }, 1400); }
+                    }).catch(() => {});
+                  }}
+                  className="label"
+                  id={'share-' + r.jobId}
+                  style={{ width: 56, flexShrink: 0, fontSize: 9, textAlign: 'right', color: 'var(--signal)', background: 'none', border: 0, cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                  title="copy permalink"
+                >
+                  share
+                </button>
+              </div>
             ))}
           </div>
         )}
