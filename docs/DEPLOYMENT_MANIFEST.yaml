@@ -1,4 +1,14 @@
 # DOCKET - Deployment Manifest (LIVE - Base Sepolia, deployed 2026-09-02)
+#
+# ===== FINAL FROZEN SNAPSHOT =====
+# repository commit:        (set at final freeze)
+# frontend URL:             https://docket-blush.vercel.app
+# compiler:                 solc 0.8.28 (pinned in foundry.toml; matches Blockscout)
+# test count (CI):          144 = 64 Solidity + 80 frontend (measured 2026-09-03)
+# +2 fork tests (local anvil, excluded from CI)
+# coverage:                 100% lines / 95.8% statements / 100% functions (ReceiptRegistry.sol)
+# CI:                       green (contracts + frontend jobs)
+# verification date:        2026-09-03 (all receipts re-read from 3 independent RPCs)
 
 network: base-sepolia
 chainId: 84532

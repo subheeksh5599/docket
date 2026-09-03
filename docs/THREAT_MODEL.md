@@ -3,6 +3,15 @@
 Assets, trust boundaries, and explicit attackers. Receipts are the crown jewels:
 they must be immutable, verifiable without DOCKET, and never rewritable by any party.
 
+## The central distinction: record integrity ≠ answer correctness
+
+DOCKET guarantees **integrity of the record** — that a receipt, once minted, is
+immutable, ask-bound, and matches exactly what the network returned. It does NOT
+guarantee **correctness of the answer** — miners can be wrong, and the record
+preserves that honestly. Every threat below is scoped against the first claim;
+the second is out of scope by design (Telegraph's validators score miners). This
+distinction is the product: DOCKET is an evidence primitive, not a truth oracle.
+
 ## Assets
 1. On-chain receipts (jobId → immutable commitment + timestamp). THE asset.
 2. User USDC escrow on the Telegraph Diamond (held by the protocol, not DOCKET).

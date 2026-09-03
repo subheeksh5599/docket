@@ -156,7 +156,7 @@ def verify(job_id, registry, rpc, answer_json=None, payload_hex=None):
     if all_pass:
         print("RESULT: RECEIPT VERIFIED - immutable on-chain receipt exists for job", job_id)
         if not (answer_json or payload_hex):
-            print("(answer-hash re-verification requires the callback payload; see --answer/--payload)")
+            print("(answer re-hash: pass the network response with --answer <json> to also verify the commitment)")
         return 0
     print("RESULT: VERIFICATION FAILED", file=sys.stderr)
     return 1

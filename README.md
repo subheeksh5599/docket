@@ -290,7 +290,7 @@ Telegraph is load-bearing — not a logo on a page:
 
 - **ERC-8183 on-chain jobs** (`createJob` → network routing → `subnetMessage` callback) are the entire delivery mechanism. The receipt exists *because* the protocol settled a job.
 - **The payment rail is the trust rail.** The callback that mints the receipt is the same callback that pays the resolver — so a receipt proves a network participant was actually paid on-chain to answer.
-- **Real jobs on a live testnet.** Jobs are created on and resolved through the Telegraph Diamond on the live testnet (129 registered miners online at build time — the protocol routes to them; DOCKET records the outcome, it does not name the resolver).
+- **Real jobs on a live testnet.** Jobs are created on and resolved through the Telegraph Diamond on the live testnet (129 registered miners observed online on 2026-09-02 — the protocol routes to them; DOCKET records the outcome, it does not name the resolver).
 - **The protocol's addresses are verified live**, not copied from memory — the Diamond, USDC, job base price (1,000,000 = 1 USDC) and 21 facets were all read on-chain and pinned in `docs/TELEGRAPH_DEPLOYMENT.md`.
 
 ---
@@ -440,7 +440,7 @@ Solidity 0.8.24 · Foundry (forge/cast) · React 19 · Vite · Tailwind v4 · vi
 ## Limitations
 
 - **DOCKET records what the network returned — it never declares what is true.** Miners can be wrong, and the record preserves that honestly. The receipt is an anchor for verification, not a truth certificate.
-- **Full answer text is not stored on-chain** — the receipt commits to the answer via hash; the full payload lives in the resolving transaction's calldata. The verifier's `--answer`/`--payload` mode re-hashes that calldata to confirm the commitment (needs the true resolving-tx calldata for a live PASS).
+- **Full answer text is not stored on-chain** — the receipt commits to the answer via hash; the full payload lives in the resolving transaction's calldata. The verifier's `--answer <json>` mode re-hashes a supplied response against the on-chain commitment (verified LIVE — receipt #28's recorded payload recomputes its exact `answerHash`).
 - **Delivery is best-effort.** The protocol swallows callback reverts (documented), so a receipt can only be minted by a well-behaved callback. If a callback ever fails, the job + answer remain readable from the resolving transaction.
 - **Testnet by design.** Base Sepolia is a testnet — USDC and ETH there have no value. This is the protocol's own testnet deployment.
 - Questions and receipts are **public on-chain data** — treat them as public.
