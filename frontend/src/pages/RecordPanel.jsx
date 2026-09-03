@@ -93,18 +93,20 @@ export default function RecordPanel({ wallet, go }) {
 
       <div className="panel" style={{ padding: '20px' }}>
         {/* question */}
-        <div className="label" style={{ marginBottom: 6 }}>QUESTION</div>
+        <label className="label" htmlFor="record-question" style={{ marginBottom: 6, display: 'block' }}>QUESTION</label>
         <textarea
+          id="record-question"
           value={question} onChange={(e) => setQuestion(e.target.value)} rows={2}
           placeholder="What is the price of Ethereum right now?"
+          aria-label="Question to put on the record"
           style={{ ...inputBase, resize: 'vertical', minHeight: 54, fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 500 }}
         />
 
         {/* intent + budget */}
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 14 }}>
           <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-            <div className="label" style={{ marginBottom: 6 }}>INTENT</div>
-            <select value={intent} onChange={(e) => setIntent(e.target.value)} style={{ ...inputBase, cursor: 'pointer' }}>
+            <label className="label" htmlFor="record-intent" style={{ marginBottom: 6, display: 'block' }}>INTENT</label>
+            <select id="record-intent" value={intent} onChange={(e) => setIntent(e.target.value)} style={{ ...inputBase, cursor: 'pointer' }} aria-label="Intent">
               {INTENTS.map((i) => <option key={i.name} value={i.name}>{i.name}</option>)}
             </select>
             <div className="label" style={{ fontSize: 9, color: 'var(--faint)', marginTop: 5, lineHeight: 1.5, textTransform: 'none', letterSpacing: '0.02em' }}>

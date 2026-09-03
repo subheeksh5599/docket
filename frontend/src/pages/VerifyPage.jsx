@@ -68,13 +68,13 @@ export default function VerifyPage() {
       <div className="panel" style={{ marginTop: 22, padding: '20px' }}>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: '1 1 140px' }}>
-            <div className="label" style={{ marginBottom: 6 }}>RECEIPT ID</div>
-            <input value={id} onChange={(e) => setId(e.target.value)} placeholder="24" inputMode="numeric"
+            <label className="label" htmlFor="verify-id" style={{ marginBottom: 6, display: 'block' }}>RECEIPT ID</label>
+            <input id="verify-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="24" inputMode="numeric" aria-label="Receipt ID"
               style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-mono)', outline: 'none' }} />
           </div>
           <div style={{ flex: '2 1 260px' }}>
-            <div className="label" style={{ marginBottom: 6 }}>ANSWER (OPTIONAL — re-hash check)</div>
-            <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="paste the network response JSON you hold…"
+            <label className="label" htmlFor="verify-answer" style={{ marginBottom: 6, display: 'block' }}>ANSWER (OPTIONAL — re-hash check)</label>
+            <input id="verify-answer" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="paste the network response JSON you hold…" aria-label="Answer response for re-hash check"
               style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '10px 12px', fontSize: 12, fontFamily: 'var(--font-mono)', outline: 'none' }} />
           </div>
           <button className="act act-solid" onClick={run} disabled={state === 'checking' || !id.trim()}>

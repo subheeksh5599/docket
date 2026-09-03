@@ -137,6 +137,7 @@ export default function ReceiptDetail({ jobId }) {
                 paste the network response you hold (JSON) — DOCKET re-hashes it and compares to the on-chain commitment:
               </div>
               <textarea
+                aria-label="Paste the network response JSON for re-hash verification"
                 value={paste} onChange={(e) => setPaste(e.target.value)} rows={4}
                 placeholder='{"status":"resolved","answer":"…","summary":"…","confidence":0.9,"miner":"0x…"}'
                 style={{ width: '100%', boxSizing: 'border-box', background: 'var(--bg-2)', color: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 'var(--radius)', padding: '10px 12px', fontSize: 12, fontFamily: 'var(--font-mono)', outline: 'none', resize: 'vertical' }}
