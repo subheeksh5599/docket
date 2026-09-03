@@ -23,10 +23,8 @@ export default function UsagePanel() {
   }
 
   const stats = [
-    ['unique wallets', m.wallets ?? '—'],
     ['questions asked', m.records ?? '—'],
     ['receipts minted', m.resolved ?? '—'],
-    ['returning users (2+ receipts)', m.returningUsers ?? '—'],
     ['intents used', m.intents ?? '—'],
     ['USDC routed (escrow)', m.jobValue != null ? `$${(m.jobValue / 1e6).toFixed(2)}` : '—'],
   ];

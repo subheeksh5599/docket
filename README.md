@@ -143,7 +143,7 @@ Real pages from the live deployment — every number shown is read directly from
 
 ### Landing
 
-The hero explains the product in one line — "Put a question on the record" — with the live usage banner below it: receipts minted, unique wallets, intents and USDC routed, all read live from the chain.
+The hero explains the product in one line — "Put a question on the record" — with the live usage banner below it: receipts minted, intents and USDC routed, all read live from the chain.
 
 <img src="assets/landing.png" alt="DOCKET landing — Put a question on the record, live usage banner" width="100%" />
 

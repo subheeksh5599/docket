@@ -226,7 +226,7 @@ export default function LandingPage({ wallet, go }) {
               {metrics.resolved} receipt{metrics.resolved === 1 ? '' : 's'} minted on Base Sepolia
             </div>
             <div className="label" style={{ fontSize: 9, color: 'var(--faint)', marginTop: 4, letterSpacing: '0.1em' }}>
-              {metrics.wallets} UNIQUE WALLET{metrics.wallets === 1 ? '' : 'S'} · {metrics.intents} INTENT{metrics.intents === 1 ? '' : 'S'} · ${metrics.jobValue != null ? (metrics.jobValue / 1e6).toFixed(2) : '—'} USDC ROUTED — EVERY RECORD ORIGINATES FROM A REAL TELEGRAPH JOB
+              {metrics.intents} INTENT{metrics.intents === 1 ? '' : 'S'} · ${metrics.jobValue != null ? (metrics.jobValue / 1e6).toFixed(2) : '—'} USDC ROUTED — EVERY RECORD ORIGINATES FROM A REAL TELEGRAPH JOB
             </div>
           </div>
           <div className="label" style={{ fontSize: 9, color: 'var(--faint)', maxWidth: 260, lineHeight: 1.7, textTransform: 'none', letterSpacing: '0.02em' }}>
