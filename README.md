@@ -10,7 +10,7 @@
 
 [![CI](https://github.com/subheeksh5599/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/subheeksh5599/docket/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-144%20passing-2ecc71)](#tests)
+[![Tests](https://img.shields.io/badge/tests-151%20passing-2ecc71)](#tests)
 ![Chain](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)
 ![Protocol](https://img.shields.io/badge/protocol-Telegraph%20ERC--8183-3ddc91)
 ![Stack](https://img.shields.io/badge/Solidity%20·%20Foundry%20·%20React%2019%20·%20viem-14151a)
@@ -206,11 +206,16 @@ A real job on the real testnet, resolved on-chain through the Telegraph network,
 | answerHash | `0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2` |
 | Status | resolved · **locked** · verified PASS |
 
+**A receipt is also machine-consumable.** A DocketGate consumer contract is
+**live on Base Sepolia** — it read receipt #28, every check passed, and its
+gated action fired (`ActionGated`): [`0xEaA18eE192D59d4D20Ff40907465a3cF9eD6a4ce`](https://sepolia.basescan.org/address/0xEaA18eE192D59d4D20Ff40907465a3cF9eD6a4ce) · action tx [`0xebcaeba…269ad`](https://sepolia.basescan.org/tx/0xebcaeba17b0e73a46da93375b859aa09f328b894066006a5f01e8c5da0c269ad). A second call reverted `ActionAlreadyExecuted` — one receipt, one action.
+
 ## Verify it yourself
 
 - **From an explorer:** open the registry address above → Contract → Read → `getReceipt(24)`. Every field is there.
 - **From any RPC:** the `cast call` in [See it in one command](#-see-it-in-one-command).
 - **From the CLI verifier:** `scripts/docket_verify.py 24` — fails over across three public RPCs and re-checks every claim (above).
+- **From an agent:** the MCP server (`mcp/docket_mcp.py`) exposes `verify_docket_receipt`, `get_docket_receipt`, `verify_docket_answer` over stdio — any agent verifies before acting (see `mcp/README.md`).
 - **From the app:** open any receipt permalink (`/#/receipt/:id`) — DOCKET reads the chain and shows the live verification, with a JSON evidence export + a machine-readable result for agents.
 - **5-minute judge guide:** [`docs/VERIFY.md`](docs/VERIFY.md) walks a stranger through proving a receipt from a plain RPC — no frontend, no installs.
 
@@ -324,10 +329,10 @@ Telegraph is load-bearing — not a logo on a page:
 | Ask → answer binding | **Real** — every `questionHash` matches `keccak256(abi.encode(question))` cross-language (Solidity + JS + Python) |
 | Contract source | **Real** — verified on Blockscout (v0.8.28), matches this repo |
 | Job price + protocol addresses | **Real** — read live from the Diamond on-chain, pinned in `docs/TELEGRAPH_DEPLOYMENT.md` |
-| 144 tests in CI (64 Solidity + 80 frontend; +2 fork tests locally) | **Real** — incl. LIVE receipt hash vectors + the DocketGate consumer suite |
+| 151 tests in CI (64 Solidity + 87 vitest; +4 invariants in the contracts job; +2 fork tests locally) | **Real** — incl. LIVE receipt hash vectors + the DocketGate consumer suite + the MCP server tests |
 | Coverage of `ReceiptRegistry.sol` | **Real** — 100% lines / 95.8% statements / 100% functions (`forge coverage`) |
-| CI — both jobs green on every push | **Real** — contracts (fmt/build/test/invariant) + frontend (lint/test/build) |
-| Clean-clone production build | **Real** — fresh `git clone` → forge install → 64 tests → `npm ci` → 80 tests → vite build, all green |
+| CI — all three jobs green on every push | **Real** — contracts (fmt/build/test/invariant) + frontend (lint/test/build) + MCP (self-test + unittest) |
+| Clean-clone production build | **Real** — fresh `git clone` → forge install → 64 tests → `npm ci` → 87 tests → vite build → MCP self-test, all green |
 | Test mocks (`MockDiamond`, `MockUSDC`) | **TEST-ONLY** — under `test/`, never deployed, zero mock refs in the production bundle |
 | Demo video | **Not recorded** — the user records demos personally |
 
@@ -339,6 +344,7 @@ Telegraph is load-bearing — not a logo on a page:
 forge test --no-match-path test/Fork.t.sol     # contracts
 FOUNDRY_INVARIANT_RUNS=128 forge test --match-path test/Invariant.t.sol
 cd frontend && npm test                         # vitest
+cd mcp && python3 -m unittest test_mcp          # MCP server (stdlib)
 ```
 
 ```text
@@ -353,7 +359,7 @@ cd frontend && npm test                         # vitest
 [PASS] test_oversizedBudget_noOverflow()
 [PASS] test_questionHash_matchesLiveReceiptVector()
 …
-Suite result: ok. 53 passed; 0 failed (unit + adversarial + edge + vectors)
+Suite result: ok. 64 passed; 0 failed (unit + adversarial + edge + vectors)
 
 invariant_receiptsAreNeverCorrupted()   (runs: 128)
 invariant_receiptHashNeverChanges()     (runs: 128)
@@ -361,8 +367,11 @@ invariant_noFundsLeak()                 (runs: 128)
 invariant_jobCountMatchesJobsCreated()  (runs: 128)
 Suite result: ok. 4 passed; 0 failed
 
-Test Files  7 passed (7)
-Tests       80 passed (80)
+Test Files  8 passed (8)
+Tests       87 passed (87)     # vitest (frontend)
+
+Ran 6 tests in 0.03s
+OK                                # python unittest (MCP server)
 ```
 
 | Test area | Count | What it proves |
@@ -374,7 +383,10 @@ Tests       80 passed (80)
 | DocketGate (consumer) | 9 | Act-on-receipt: allow on valid locked receipt, deny wrong hash/intent/pending/none, once-only, zero-registry |
 | Stateful invariants | 4 | Receipts never corrupted, hashes never change, **every minted USDC conserved**, no double-mint |
 | Fork (local anvil) | 2 | Registry against the REAL Diamond + real USDC on an anvil fork of Base Sepolia |
-| Frontend | 80 | Hash vectors (incl. LIVE receipt answer-hash), error taxonomy, ABI shape, routing, the /verify verifier |
+| Frontend | 87 | Hash vectors (incl. LIVE receipt answer-hash), error taxonomy, ABI shape, routing, the /verify verifier, pending-job persistence |
+| MCP server | 6 | keccak + canonical-hash vectors, receipt verify, answer match + tamper detection, input guards |
+
+**CI test count: 151** (64 Solidity unit/adversarial/edge/vector tests + 87 vitest). The contracts CI job also runs the 4 stateful invariants (128 runs each) in the same job; the 2 fork tests need a live anvil fork and run locally only. See `.github/workflows/ci.yml`.
 
 ---
 
