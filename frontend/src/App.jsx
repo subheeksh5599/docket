@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from './hooks/useWallet';
-import { REGISTRY } from './lib/chain';
+import { REGISTRY, DIAMOND, USDC, fetchReceipt, publicClient } from './lib/chain';
 import AskPanel from './components/AskPanel';
-import ReceiptBoard from './components/ReceiptBoard';
+import ReceiptFeed from './components/ReceiptFeed';
 import ReceiptView from './components/ReceiptView';
 import TrustPage from './components/TrustPage';
+import SideStats from './components/SideStats';
 
 // Tiny hash router — no dependency. Routes:
-//   #/                 -> ask (hero + panel)
-//   #/receipts         -> receipt board
+//   #/                 -> dashboard (left rail / ask+feed / right stats)
+//   #/receipts         -> receipt feed (main column)
 //   #/receipt/:jobId   -> single immutable receipt (permalink target)
 //   #/trust            -> "why trust this" page
-function parseHash() {
+export function parseHash() {
   const h = window.location.hash.replace(/^#\/?/, '');
   const parts = h.split('/').filter(Boolean);
   if (parts[0] === 'receipt' && parts[1]) return { route: 'receipt', jobId: parts[1] };
@@ -20,9 +21,16 @@ function parseHash() {
   return { route: 'ask' };
 }
 
+const NAV = [
+  ['', 'Dashboard'],
+  ['receipts', 'The record'],
+  ['trust', 'Why trust this'],
+];
+
 export default function App() {
   const wallet = useWallet();
   const [route, setRoute] = useState(() => parseHash());
+  const [liveCount, setLiveCount] = useState(null);
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
@@ -30,88 +38,134 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const go = (r) => { window.location.hash = r; };
+  // live receipt-count read for the left rail
+  useEffect(() => {
+    if (!REGISTRY) return;
+    let live = true;
+    (async () => {
+      try {
+        const n = await publicClient.readContract({ address: REGISTRY, abi: [], functionName: 'jobCount' });
+        if (live) setLiveCount(Number(n));
+      } catch { /* rail shows — when offline */ }
+    })();
+    return () => { live = false; };
+  }, [wallet.account]);
 
-  const linkCls = (active) =>
-    `text-[12px] uppercase tracking-[0.14em] font-mono transition-colors duration-150 ${
-      active ? 'text-ink font-semibold' : 'text-faint hover:text-ink'
-    }`;
+  const go = (r) => { window.location.hash = r; };
+  const activeRoute = route.route === 'receipt' ? 'receipts' : route.route;
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      {/* Nav */}
-      <header className="border-b border-line bg-paper/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-[1200px] mx-auto px-8 h-16 flex items-center justify-between">
-          <button className="flex items-center gap-3" onClick={() => go('')}>
-            <span className="w-2 h-2 rounded-full bg-signal pulse-dot" />
-            <span className="font-mono font-semibold text-[15px] tracking-[0.12em] text-ink">DOCKET</span>
-          </button>
-          <nav className="hidden md:flex items-center gap-8">
-            <button onClick={() => go('')} className={linkCls(route.route==='ask')}>Ask</button>
-            <button onClick={() => go('receipts')} className={linkCls(route.route==='receipts' || route.route==='receipt')}>Receipts</button>
-            <button onClick={() => go('trust')} className={linkCls(route.route==='trust')}>Why trust this</button>
-          </nav>
-          <div>
-            {wallet.account ? (
-              <button className="btn-pill-ghost !py-2 !px-5 text-xs" onClick={wallet.disconnect}>
-                {wallet.account.slice(0,6)}…{wallet.account.slice(-4)}
-              </button>
-            ) : (
-              <button className="btn-pill-primary !py-2 !px-5 text-xs" onClick={wallet.connect} disabled={wallet.status==='connecting'}>
-                {wallet.status==='connecting' ? 'Connecting…' : 'Connect Wallet'}
-              </button>
-            )}
-          </div>
+    <div className="min-h-screen bg-bg text-ink">
+      {/* ambient dither field behind everything */}
+      <div aria-hidden className="app-dither" />
+
+      {/* ---- HEADER ---- */}
+      <header
+        style={{
+          position: 'sticky', top: 0, zIndex: 50,
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16,
+          padding: '10px 24px',
+          borderBottom: '1px solid var(--line)',
+          background: 'color-mix(in oklch, var(--bg) 82%, transparent)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <button onClick={() => go('')} className="pixel" style={{ fontSize: 22, letterSpacing: '0.03em', color: 'var(--ink)', marginRight: 8, background: 'none', border: 0, cursor: 'pointer' }}>
+          <span className="kol">DOC</span>KET
+        </button>
+        <nav style={{ display: 'flex', gap: 20 }}>
+          {NAV.map(([href, label]) => (
+            <button key={href || 'home'} onClick={() => go(href)} className="link label" style={{ fontSize: 11, background: 'none', border: 0, cursor: 'pointer', color: activeRoute === (href || 'ask' === '' ? 'ask' : href) ? 'var(--ink)' : 'inherit' }}>
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span className="label" style={{ color: 'var(--loss)', fontSize: 10 }}>
+            ● base sepolia 84532
+          </span>
+          {wallet.account ? (
+            <button onClick={wallet.disconnect} style={btnGhost}>
+              {wallet.account.slice(0,6)}…{wallet.account.slice(-4)}
+            </button>
+          ) : (
+            <button style={btnPrimary} onClick={() => wallet.connect()} disabled={wallet.status==='connecting'}>
+              {wallet.status==='connecting' ? 'Connecting…' : 'Connect'}
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Body */}
+      {/* ---- BODY ---- */}
       {route.route === 'receipt' ? (
-        <main className="max-w-[1200px] mx-auto px-8 py-16 pb-24">
+        <main className="mx-auto max-w-7xl px-6" style={{ padding: 'clamp(32px, 5vw, 56px) 24px' }}>
           <ReceiptView jobId={route.jobId} />
         </main>
       ) : route.route === 'trust' ? (
         <TrustPage />
       ) : (
-        <>
-          {/* Hero (home + receipts share it) */}
-          <section className="max-w-[1200px] mx-auto px-8 pt-20 pb-14">
-            <p className="eyebrow mb-4 text-faint">PUT A QUESTION ON THE RECORD</p>
-            <h1 className="font-display font-bold text-5xl md:text-6xl leading-[1.05] text-ink max-w-3xl">
-              Ask the network.<br />Mint the receipt.
-            </h1>
-            <p className="mt-6 text-muted text-[15px] max-w-2xl leading-relaxed">
-              DOCKET sends your question to Telegraph's top-ranked miners through a real
-              on-chain job. The verified answer — the miner, the hash, the block — is written
-              on-chain, forever. No screenshots. No files. The protocol itself mints the record.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button onClick={() => go('')} className="btn-pill-primary">Ask a question</button>
-              <button onClick={() => go('receipts')} className="btn-pill-ghost">View receipts</button>
-            </div>
-            {!REGISTRY && (
-              <div className="mt-6 inline-flex items-center gap-2 card-dark px-5 py-3 text-sm text-loss">
-                ⚠ Registry not yet deployed — the ask flow activates once VITE_REGISTRY_ADDRESS is set.
+        <main className="mx-auto max-w-7xl px-6" style={{ padding: 'clamp(32px, 5vw, 56px) 24px' }}>
+          <div className="term-grid">
+            {/* ---- LEFT RAIL ---- */}
+            <aside className="term-left">
+              <div className="term-sticky" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div className="label" style={{ color: 'var(--ink)' }}>{'// docket terminal'}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {NAV.map(([href, label]) => (
+                    <button key={href || 'home'} onClick={() => go(href)} className={`filter-pill ${activeRoute === (href === '' ? 'ask' : href) ? 'filter-on' : ''}`} style={{ textAlign: 'left' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="label" style={{ color: 'var(--faint)', fontSize: 9, lineHeight: 1.6, marginTop: 8 }}>
+                  Real Telegraph miner answers are written on-chain by the protocol's own callback, then locked. Every receipt here is a live Base Sepolia read.
+                </div>
               </div>
-            )}
-          </section>
+            </aside>
 
-          <main className="max-w-[1200px] mx-auto px-8 pb-24">
-            {route.route === 'ask' ? <AskPanel wallet={wallet} /> : <ReceiptBoard wallet={wallet} />}
-          </main>
-        </>
+            {/* ---- MAIN ---- */}
+            <div>
+              <div className="term-feed-head">
+                <span>
+                  {route.route === 'ask' ? 'ask the network' : 'the record'}{' '}
+                  <span className="flick" style={{ color: 'var(--signal)' }}>●</span>
+                </span>
+                <span className="tnum" style={{ color: 'var(--faint)', fontSize: 11 }}>
+                  {liveCount !== null ? `${liveCount} jobs on-chain` : ''}
+                </span>
+              </div>
+
+              {route.route === 'ask' ? <AskPanel wallet={wallet} /> : <ReceiptFeed wallet={wallet} />}
+            </div>
+
+            {/* ---- RIGHT RAIL ---- */}
+            <aside className="term-right">
+              <SideStats wallet={wallet} />
+            </aside>
+          </div>
+        </main>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-line">
-        <div className="max-w-[1200px] mx-auto px-8 py-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-signal pulse-dot" />
-            <span className="eyebrow text-faint">DOCKET — RECORDS WHAT THE NETWORK RETURNED. NEVER DECLARES TRUTH.</span>
-          </div>
-          <span className="eyebrow text-faint">BASE SEPOLIA · TELEGRAPH ERC-8183</span>
+      {/* ---- FOOTER ---- */}
+      <footer style={{ borderTop: '1px solid var(--line)', marginTop: 40 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span className="label" style={{ color: 'var(--faint)', fontSize: 9 }}>
+            DOCKET records what the network returned. It never declares truth.
+          </span>
+          <span className="label" style={{ color: 'var(--faint)', fontSize: 9 }}>
+            base sepolia · telegraph erc-8183
+          </span>
         </div>
       </footer>
     </div>
   );
 }
+
+const btnBase = {
+  fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+  border: '1px solid var(--line-strong)', borderRadius: 'var(--radius)', padding: '6px 12px',
+  background: 'transparent', color: 'var(--muted)', cursor: 'pointer',
+  transition: 'color .2s, border-color .2s, background .2s',
+};
+const btnGhost = { ...btnBase };
+const btnPrimary = { ...btnBase, background: 'var(--ink)', color: 'var(--bg)', borderColor: 'var(--ink)' };

@@ -8,11 +8,6 @@ const INTENTS = [
   'URL_SCAN', 'FACT_CHECK', 'NEWS_SEARCH', 'CHAT_COMPLETION',
 ];
 
-const inputCls =
-  'w-full bg-paper-2 text-ink border border-line rounded-[3px] p-3.5 text-sm font-mono ' +
-  'placeholder:text-faint focus:outline-none focus:border-ink transition-colors resize-none';
-const labelCls = 'eyebrow block mb-2 text-faint';
-
 export default function AskPanel({ wallet }) {
   const [question, setQuestion] = useState('');
   const [intent, setIntent] = useState('CRYPTO_PRICE');
@@ -40,70 +35,88 @@ export default function AskPanel({ wallet }) {
     }
   };
 
-  return (
-    <div className="card-dark p-8">
-      <p className="eyebrow text-faint mb-2">NEW RECORD</p>
-      <h2 className="font-display text-2xl font-bold text-ink mb-6">Ask the network</h2>
+  const label = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--faint)' };
+  const input = {
+    width: '100%', background: 'var(--bg-2)', color: 'var(--ink)',
+    border: '1px solid var(--line)', borderRadius: 'var(--radius)',
+    padding: '10px 12px', fontSize: 13, fontFamily: 'var(--font-mono)',
+    outline: 'none', transition: 'border-color .18s', boxSizing: 'border-box',
+  };
 
-      <div className="space-y-5">
-        <div>
-          <label htmlFor="ask-question" className={labelCls}>QUESTION</label>
-          <textarea
-            id="ask-question"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            rows={3}
-            placeholder="Is this token's contract safe? What is the verified price of X?"
-            className={inputCls}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label htmlFor="ask-intent" className={labelCls}>INTENT</label>
-            <select id="ask-intent" value={intent} onChange={(e) => setIntent(e.target.value)} className={inputCls + ' cursor-pointer'}>
-              {INTENTS.map((i) => <option key={i} value={i}>{i}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="ask-budget" className={labelCls}>BUDGET (μUSDC)</label>
-            <input id="ask-budget" value={budget} onChange={(e) => setBudget(e.target.value)} className={inputCls} />
-            <p className="text-xs text-faint mt-1">Job price on testnet = 1,000,000 (1 USDC). Escrowed on the Diamond.</p>
+  return (
+    <div className="panel scan" style={{ padding: '16px 20px', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 300px' }}>
+          <div className="label" style={{ color: 'var(--ink)' }}>{'// ask the network'}</div>
+          <div className="label" style={{ color: 'var(--faint)', fontSize: 10, marginTop: 4, lineHeight: 1.5 }}>
+            One real question. One ERC-8183 job on the Telegraph Diamond. The callback that pays the miner writes your receipt — locked.
           </div>
         </div>
-        <button className="btn-pill-primary w-full md:w-auto" onClick={submit}
+        <button className="act act-solid" onClick={submit}
           disabled={phase==='approving'||phase==='submitting'||!question.trim()}>
           {phase==='approving' ? 'Approving USDC…' : phase==='submitting' ? 'Creating job…' : 'Put it on the record'}
         </button>
       </div>
 
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label htmlFor="ask-question" style={{ ...label, display: 'block', marginBottom: 6 }}>QUESTION</label>
+          <textarea
+            id="ask-question"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={2}
+            placeholder="Is this token's contract safe? What is the verified price of X?"
+            style={{ ...input, resize: 'vertical', minHeight: 52 }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 240px' }}>
+            <label htmlFor="ask-intent" style={{ ...label, display: 'block', marginBottom: 6 }}>INTENT</label>
+            <select id="ask-intent" value={intent} onChange={(e) => setIntent(e.target.value)} style={{ ...input, cursor: 'pointer' }}>
+              {INTENTS.map((i) => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: '1 1 160px' }}>
+            <label htmlFor="ask-budget" style={{ ...label, display: 'block', marginBottom: 6 }}>BUDGET (μUSDC)</label>
+            <input id="ask-budget" value={budget} onChange={(e) => setBudget(e.target.value)} style={input} />
+          </div>
+        </div>
+        <div className="label" style={{ color: 'var(--faint)', fontSize: 9 }}>
+          job price on testnet = 1,000,000 (1 USDC) · escrowed on the diamond, never by docket
+        </div>
+      </div>
+
       {phase==='done' && result && (
-        <div className="mt-6 card-white p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 rounded-full bg-signal pulse-dot" />
-            <span className="eyebrow text-gain">JOB SUBMITTED — AWAITING MINER RESPONSE</span>
+        <div className="panel" style={{ marginTop: 12, padding: '12px 14px', borderColor: 'var(--gain)' }}>
+          <span className="label" style={{ color: 'var(--gain)', wordBreak: 'break-word' }}>
+            ✓ job submitted — awaiting miner response
+          </span>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span className="link label" style={{ fontSize: 11 }}>{result.question}</span>
+            <span className="link label" style={{ fontSize: 11 }}>intent · {result.intent}</span>
+            <span className="link label" style={{ fontSize: 11 }}>createJob ↗ {String(result.txHash).slice(0, 10)}…</span>
           </div>
-          <p className="text-ink font-semibold">{result.question}</p>
-          <p className="text-sm text-muted mt-1">Intent: {result.intent}</p>
-          <div className="mt-4 space-y-1 font-mono text-xs text-muted break-all">
-            <p>approve: {result.approveHash}</p>
-            <p>createJob: {result.txHash}</p>
+          <div className="label" style={{ color: 'var(--faint)', fontSize: 9, marginTop: 6 }}>
+            the receipt is minted when the protocol resolves the job — track it in the record.
           </div>
-          <p className="mt-3 text-xs text-faint">The receipt is minted when the protocol resolves the job through the callback. Track it in the Receipts view.</p>
         </div>
       )}
 
       {phase==='error' && error && (
-        <div className="mt-6 card-dark border border-loss/30 p-5 text-sm">
-          <p className="text-loss font-medium">{error.message}</p>
-          {error.retry && <p className="text-muted mt-1">Retry: {error.retry}</p>}
+        <div className="panel" style={{ marginTop: 12, padding: '12px 14px', borderColor: 'var(--loss)' }}>
+          <span className="label" style={{ color: 'var(--loss)', wordBreak: 'break-word' }}>⚠ {error.message}</span>
+          {error.retry && <div className="label" style={{ color: 'var(--faint)', marginTop: 4 }}>retry: {error.retry}</div>}
           {error.code && error.code !== 'UNKNOWN_PROTOCOL_ERROR' && (
-            <p className="text-faint mt-2 font-mono text-xs">{error.code}</p>
+            <div className="label" style={{ color: 'var(--faint)', marginTop: 4, fontSize: 9 }}>{error.code}</div>
           )}
         </div>
       )}
 
       {!wallet.account && (
-        <p className="mt-6 text-sm text-muted">Connect your wallet to put a question on the record.</p>
+        <div className="label" style={{ color: 'var(--faint)', marginTop: 12 }}>
+          connect your wallet to put a question on the record.
+        </div>
       )}
     </div>
   );

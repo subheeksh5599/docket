@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import ReceiptBoard from './ReceiptBoard';
+import ReceiptFeed from './ReceiptFeed';
 
-// The ReceiptBoard reads the chain via ../lib/chain — mock the reads so the
-// component tests are deterministic (no live RPC in unit tests).
 vi.mock('../lib/chain', () => ({
   fetchUserJobCount: vi.fn(),
   fetchReceipt: vi.fn(),
@@ -14,7 +12,7 @@ vi.mock('../lib/chain', () => ({
 
 const chain = await import('../lib/chain');
 
-describe('ReceiptBoard', () => {
+describe('ReceiptFeed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     chain.fetchUserJobCount.mockResolvedValue(0);
@@ -22,51 +20,43 @@ describe('ReceiptBoard', () => {
   });
 
   it('asks to connect when no wallet', () => {
-    render(<ReceiptBoard wallet={{ account: null }} />);
+    render(<ReceiptFeed wallet={{ account: null }} />);
     expect(screen.getByText(/connect your wallet/i)).toBeTruthy();
   });
 
   it('shows empty state when wallet connected and no receipts', async () => {
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
+    render(<ReceiptFeed wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/no receipts yet/i)).toBeTruthy();
-    expect(screen.getByText('0')).toBeTruthy();
   });
 
-  it('shows the receipt count from the chain', async () => {
-    chain.fetchUserJobCount.mockResolvedValue(3);
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
-    expect(await screen.findByText('3')).toBeTruthy();
-  });
-
-  it('renders a resolved receipt card with MINTED state', async () => {
+  it('renders a resolved receipt row (minted)', async () => {
     chain.fetchUserJobCount.mockResolvedValue(1);
     chain.publicClient.readContract.mockResolvedValue(42n); // jobsOf returns job 42
     chain.fetchReceipt.mockResolvedValue({
       jobId: 42n, intentId: '0x11', questionHash: '0x22',
       answerHash: '0x' + 'ab'.repeat(32), createdAt: 1788355510n, resolved: true,
     });
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
+    render(<ReceiptFeed wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/job #42/i)).toBeTruthy();
-    expect(screen.getByText('Minted')).toBeTruthy();
-    expect(screen.getByText(/commitment:/i)).toBeTruthy();
+    expect(screen.getByText('minted')).toBeTruthy();
+    expect(screen.getByText(/commitment/i)).toBeTruthy();
   });
 
-  it('renders a pending receipt card', async () => {
+  it('renders a pending receipt row', async () => {
     chain.fetchUserJobCount.mockResolvedValue(1);
     chain.publicClient.readContract.mockResolvedValue(7n); // jobsOf returns job 7
     chain.fetchReceipt.mockResolvedValue({
       jobId: 7n, intentId: '0x11', questionHash: '0x22',
       answerHash: '0x00', createdAt: 1788355510n, resolved: false,
     });
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
+    render(<ReceiptFeed wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/job #7/i)).toBeTruthy();
-    expect(screen.getByText('Pending')).toBeTruthy();
-    expect(screen.getByText(/waiting for the network/i)).toBeTruthy();
+    expect(screen.getByText('pending')).toBeTruthy();
   });
 
   it('recovers gracefully when the chain read fails', async () => {
     chain.fetchUserJobCount.mockRejectedValue(new Error('RPC down'));
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
+    render(<ReceiptFeed wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/RPC down/i)).toBeTruthy();
   });
 
@@ -79,7 +69,7 @@ describe('ReceiptBoard', () => {
       jobId: BigInt(id), intentId: '0x11', questionHash: '0x22',
       answerHash: '0x' + 'cd'.repeat(32), createdAt: 1788355510n, resolved: true,
     }));
-    render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
+    render(<ReceiptFeed wallet={{ account: '0xabc' }} />);
     await screen.findByText(/job #10/i);
     expect(chain.fetchReceipt).toHaveBeenCalledTimes(2);
   });

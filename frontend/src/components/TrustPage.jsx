@@ -1,92 +1,82 @@
 import { REGISTRY, DIAMOND, USDC } from '../lib/chain';
 import { explorerAddress } from '../lib/evidence';
 
+const SHORT = (s) => (s ? String(s).slice(0, 6) + '…' + String(s).slice(-4) : '—');
+const label = { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--faint)' };
+
 export default function TrustPage() {
   return (
-    <main className="max-w-[900px] mx-auto px-8 py-16 pb-24">
-      <p className="eyebrow text-faint mb-2">WHY TRUST THIS</p>
-      <h1 className="font-display font-bold text-4xl md:text-5xl leading-tight text-ink mb-8">
-        The network wrote it. Not us. Not you.
-      </h1>
+    <main className="mx-auto max-w-7xl px-6" style={{ padding: 'clamp(32px, 5vw, 56px) 24px' }}>
+      <div className="term-feed-head" style={{ marginBottom: 20 }}>
+        <span>why trust this</span>
+      </div>
 
-      <div className="space-y-5 text-muted text-[15px] leading-relaxed">
-        <section className="card-dark p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-3">No database. No server. No delete button.</h2>
-          <p>
-            DOCKET has no backend. There is nothing to hack, censor, or quietly edit. Your
-            question is committed to the <strong className="text-ink">ReceiptRegistry</strong>, a
-            smart contract on Base Sepolia, before any miner sees it. When Telegraph's network
-            resolves the job, the protocol's callback writes the answer commitment to the same
-            contract in a single transaction. After that the receipt is <strong className="text-ink">locked</strong> —
-            the contract has no update function. It cannot be edited, deleted, or re-minted.
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 14 }}>
+        <div className="side-card">
+          <div className="label" style={{ color: 'var(--ink)', marginBottom: 10 }}>{'// no database'}</div>
+          <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.7 }}>
+            DOCKET has no backend. Nothing to hack, censor, or quietly edit. Your question is committed to the ReceiptRegistry on Base Sepolia before any miner sees it; the protocol's callback writes the answer commitment in a single transaction, then the receipt is <span style={{ color: 'var(--ink)' }}>locked</span> — the contract has no update function.
           </p>
-        </section>
+        </div>
 
-        <section className="card-dark p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-3">The receipt is an anchor, not an opinion</h2>
-          <p>
-            The record stores cryptographic commitments: <code className="font-mono text-xs">keccak256</code> hashes
-            of the question and the network's returned answer payload. DOCKET's invariant —
-            printed in the footer of every page — is that it <em>records what the network
-            returned</em>. It never declares what is true. The hash is the anchor: anyone can
-            re-hash the original payload with the same rule and confirm the receipt matches,
-            forever, with no trusted party.
+        <div className="side-card">
+          <div className="label" style={{ color: 'var(--ink)', marginBottom: 10 }}>{'// an anchor, not an opinion'}</div>
+          <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.7 }}>
+            The record stores keccak256 commitments of the question and the network's returned answer payload. DOCKET records what the network returned — it never declares what is true. Anyone can re-hash the original payload with the same public rule and confirm the receipt matches, forever.
           </p>
-        </section>
+        </div>
 
-        <section className="card-dark p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-3">Real miners. Real payment. Real callbacks.</h2>
-          <p>
-            Every request escrows real testnet USDC into the Telegraph Diamond (the protocol's
-            own escrow — DOCKET never holds funds) and issues an ERC-8183 <code className="font-mono text-xs">createJob</code>.
-            Telegraph routes the job to a real registered miner, who is paid on resolution.
-            The callback that mints your receipt is the same callback that settles the miner —
-            so the receipt is minted by the exact mechanism the protocol uses to pay for work.
+        <div className="side-card">
+          <div className="label" style={{ color: 'var(--ink)', marginBottom: 10 }}>{'// real miners, real payment'}</div>
+          <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.7 }}>
+            Every request escrows real testnet USDC into the Telegraph Diamond — the protocol's own escrow; DOCKET never holds funds — and issues an ERC-8183 createJob. The callback that mints your receipt is the same callback that settles the miner.
           </p>
-        </section>
+        </div>
 
-        <section className="card-dark p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-3">Independently verifiable, no DOCKET required</h2>
-          <p>
-            Every claim can be checked from a plain explorer or a one-line RPC call:
-          </p>
-          <ul className="list-disc list-inside space-y-1.5 mt-3 text-muted font-mono text-xs">
-            <li>ReceiptRegistry source is verified on Blockscout (matches this repo).</li>
-            <li>Read <code className="text-ink">getReceipt(jobId)</code> from any RPC.</li>
-            <li>Check the job on the Telegraph Diamond: <code className="text-ink">getJob(jobId)</code>.</li>
-            <li>Re-hash the answer payload and compare — the rule is public.</li>
-          </ul>
-        </section>
-
-        <section className="card-dark p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-3">What DOCKET does NOT claim</h2>
-          <ul className="list-disc list-inside space-y-1.5 mt-2 text-muted">
-            <li>It does not certify answers as true — miners can be wrong, and the record preserves that honestly.</li>
-            <li>It is not a wallet, bank, or custodian — escrow is the protocol's payment rail only.</li>
-            <li>It is not a court or oracle — nothing here settles disputes; it records outcomes.</li>
-            <li>Questions and receipts are public on-chain data — treat them as public.</li>
-          </ul>
-        </section>
-
-        <section className="card-dark border border-line-strong p-6">
-          <h2 className="font-display text-xl font-bold text-ink mb-4">Verify the anchors yourself</h2>
-          <div className="grid gap-2 font-mono text-xs text-muted break-all">
-            <p><span className="eyebrow text-faint block mb-1">RECEIPT REGISTRY (VERIFIED SOURCE)</span>
-              <a className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink" href={explorerAddress(REGISTRY)} target="_blank" rel="noreferrer">{REGISTRY || '— set VITE_REGISTRY_ADDRESS'}</a>
-            </p>
-            <p><span className="eyebrow text-faint block mb-1 mt-3">TELEGRAPH DIAMOND</span>
-              <a className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink" href={explorerAddress(DIAMOND)} target="_blank" rel="noreferrer">{DIAMOND}</a>
-            </p>
-            <p><span className="eyebrow text-faint block mb-1 mt-3">USDC (ESCROW TOKEN)</span>
-              <a className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink" href={explorerAddress(USDC)} target="_blank" rel="noreferrer">{USDC}</a>
-            </p>
+        <div className="side-card">
+          <div className="label" style={{ color: 'var(--ink)', marginBottom: 10 }}>{'// verifiable without docket'}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
+            <span>· source verified on Blockscout (matches repo)</span>
+            <span>· read getReceipt(jobId) from any RPC</span>
+            <span>· check getJob(jobId) on the Diamond</span>
+            <span>· re-hash the payload — the rule is public</span>
           </div>
-          <p className="mt-5 text-xs text-faint">
-            Registry address is injected at build time via VITE_REGISTRY_ADDRESS. Diamond and USDC are
-            public protocol constants verified on-chain 2026-09-02 (see docs/TELEGRAPH_DEPLOYMENT.md).
-          </p>
-        </section>
+        </div>
+
+        <div className="side-card">
+          <div className="label" style={{ color: 'var(--loss)', marginBottom: 10 }}>{'// what docket does not claim'}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+            <span>· answers are not certified true — miners can be wrong, the record preserves that honestly</span>
+            <span>· not a wallet, bank, or custodian — escrow is the protocol's payment rail</span>
+            <span>· not a court or oracle — it records outcomes</span>
+            <span>· questions and receipts are public on-chain data</span>
+          </div>
+        </div>
+      </div>
+
+      {/* anchors */}
+      <div className="panel" style={{ padding: '6px 18px' }}>
+        <div className="label" style={{ padding: '12px 0 4px' }}>{'// verify the anchors yourself'}</div>
+        <Anchor k="receipt registry (verified source)" v={REGISTRY || '— set VITE_REGISTRY_ADDRESS'} href={REGISTRY && explorerAddress(REGISTRY)} />
+        <Anchor k="telegraph diamond" v={DIAMOND} href={explorerAddress(DIAMOND)} />
+        <Anchor k="usdc (escrow token)" v={USDC} href={explorerAddress(USDC)} />
+        <div className="label" style={{ color: 'var(--faint)', fontSize: 9, padding: '6px 0 12px', lineHeight: 1.6 }}>
+          registry address injected at build time (VITE_REGISTRY_ADDRESS). diamond + usdc are public protocol constants verified on-chain 2026-09-02 — see docs/TELEGRAPH_DEPLOYMENT.md.
+        </div>
       </div>
     </main>
+  );
+}
+
+function Anchor({ k, v, href }) {
+  return (
+    <div className="stat-row" style={{ gap: 16 }}>
+      <span className="stat-k" style={{ flexShrink: 0, width: 180 }}>{k}</span>
+      {href ? (
+        <a className="link tnum" style={{ fontSize: 12, wordBreak: 'break-all' }} href={href} target="_blank" rel="noreferrer">{v} ↗</a>
+      ) : (
+        <span className="stat-v">{v}</span>
+      )}
+    </div>
   );
 }
