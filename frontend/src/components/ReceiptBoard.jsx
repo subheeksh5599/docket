@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { publicClient, fetchUserJobCount, fetchReceipt, REGISTRY, registryAbi } from '../lib/chain';
 import { canonicalAnswerHash } from '../lib/hash';
-
-const EXPLORER = 'https://sepolia.basescan.org';
+import { receiptPermalink, explorerTx } from '../lib/evidence';
 
 export default function ReceiptBoard({ wallet }) {
   const [count, setCount] = useState(0);
@@ -128,7 +127,8 @@ function ReceiptCard({ r }) {
         <>
           <p className="font-mono text-xs text-pure-white/50 break-all mb-1">commitment: {String(r.answerHash || '').slice(0, 24)}…</p>
           <div className="flex items-center gap-3 flex-wrap">
-            <a className="text-neon-pulse text-xs underline" href={`${EXPLORER}/tx/0x${r.jobId}`} target="_blank" rel="noreferrer">explorer →</a>
+            <a className="text-neon-pulse text-xs underline" href={explorerTx(r.jobId === '—' ? null : r.jobId)} target="_blank" rel="noreferrer">explorer →</a>
+            <a className="text-pure-white/70 text-xs underline hover:text-neon-pulse" href={r.jobId !== '—' ? receiptPermalink(r.jobId) : undefined}>permalink →</a>
             <button className="text-pure-white/70 text-xs underline hover:text-neon-pulse" onClick={runVerify} disabled={verifyState==='checking'}>
               {verifyState==='checking' ? 'verifying…' : 'verify from chain'}
             </button>
