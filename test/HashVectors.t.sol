@@ -81,11 +81,7 @@ contract HashVectorsTest is Test {
     }
 
     // helper
-    function _resp(string memory text, string memory model)
-        internal
-        pure
-        returns (OnChainData memory r)
-    {
+    function _resp(string memory text, string memory model) internal pure returns (OnChainData memory r) {
         r.strings = new string[](2);
         r.strings[0] = text;
         r.strings[1] = model;
