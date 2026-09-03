@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { REGISTRY, DIAMOND, USDC, fetchRecentReceipts } from '../lib/chain';
-import { receiptPermalink, explorerAddress } from '../lib/evidence';
+import { REGISTRY, DIAMOND, USDC, fetchReceipt } from '../lib/chain';
+import { explorerAddress } from '../lib/evidence';
 import InteractiveDither from '../components/InteractiveDither';
 import DitherArt from '../components/DitherArt';
 
 // Landing — the first page. Same visual grammar as the reference: an
 // interactive WebGL dither hero, typewriter headline, hover-swap sponsor
 // words, dithered evidence cells. No walls of text, no generic claims.
+
+// A real, live receipt on the canonical registry — read fresh for the
+// "it works" proof band below (public artifact, same class as the protocol
+// constants; the values shown are whatever the chain returns, never hardcoded).
+const LIVE_RECEIPT_ID = 28;
 
 const EVIDENCE = [
   {
@@ -88,17 +93,24 @@ function Typewriter({ text, speed = 30 }) {
 }
 
 export default function LandingPage({ wallet, go }) {
-  const [recent, setRecent] = useState(null);
   const [hovered, setHovered] = useState(null);
+  const [liveReceipt, setLiveReceipt] = useState(null);
   const active = hovered ? SPONSOR_COPY[hovered] : DEFAULT;
   const swapKey = hovered ?? 'default';
+  const evidenceRef = useRef(null);
 
   useEffect(() => {
     if (!REGISTRY) return;
     let live = true;
-    fetchRecentReceipts(5).then((r) => { if (live) setRecent(r); });
+    fetchReceipt(LIVE_RECEIPT_ID)
+      .then((r) => { if (live) setLiveReceipt(r); })
+      .catch(() => { /* the proof band hides when the chain read fails */ });
     return () => { live = false; };
   }, []);
+
+  const scrollToEvidence = () => {
+    evidenceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -175,13 +187,13 @@ export default function LandingPage({ wallet, go }) {
           </div>
         </div>
 
-        <div className="label" style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', zIndex: 10, fontSize: 9 }}>
+        <button onClick={scrollToEvidence} className="label" style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', zIndex: 10, fontSize: 9, background: 'none', border: 0, cursor: 'pointer', color: 'var(--faint)' }}>
           ↓ scroll to the mechanics
-        </div>
+        </button>
       </section>
 
       {/* ---- EVIDENCE: dithered how-the-record-works ---- */}
-      <section className="mx-auto max-w-6xl px-6" style={{ padding: 'clamp(56px, 10vw, 120px) 24px' }}>
+      <section ref={evidenceRef} className="mx-auto max-w-6xl px-6" style={{ padding: 'clamp(56px, 10vw, 120px) 24px', scrollMarginTop: 70 }}>
         <div className="label" style={{ marginBottom: 10 }}>{'// how the record works'}</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 5vw, 52px)', letterSpacing: '-0.02em', maxWidth: '18ch', lineHeight: 1.05, color: 'var(--ink)' }}>
           The receipt is minted by the network — not by DOCKET.
@@ -201,29 +213,34 @@ export default function LandingPage({ wallet, go }) {
           ))}
         </div>
 
-      {/* live recent-records strip */}
-        <div style={{ marginTop: 56 }}>
+      {/* ---- LIVE PROOF — a real receipt, read live from the chain ---- */}
+      {liveReceipt && (
+        <div style={{ marginTop: 64 }}>
           <div className="term-feed-head">
-            <span>Recent records <span className="flick" style={{ color: 'var(--signal)' }}>●</span></span>
-            <span className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>LIVE — READ FROM THE CHAIN</span>
+            <span>It works — a live receipt <span className="flick" style={{ color: 'var(--signal)' }}>●</span></span>
+            <span className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>READ FROM BASE SEPOLIA</span>
           </div>
-          {!recent ? (
-            <div className="panel" style={{ padding: '24px', textAlign: 'center' }}><span className="label" style={{ color: 'var(--faint)' }}>reading…</span></div>
-          ) : recent.length === 0 ? (
-            <div className="panel" style={{ padding: '24px', textAlign: 'center' }}><span className="label" style={{ color: 'var(--faint)' }}>no receipts in the recent window</span></div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {recent.map((r) => (
-                <a key={r.jobId} href={receiptPermalink(r.jobId)} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 6px', borderBottom: '1px solid var(--line)', textDecoration: 'none' }}>
-                  <span className="tnum" style={{ fontSize: 12.5, color: 'var(--ink)', width: 44, flexShrink: 0 }}>#{r.jobId}</span>
-                  <span className="tnum" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.questionHash}</span>
-                  <span className="label" style={{ color: 'var(--gain)', fontSize: 9 }}>RESOLVED</span>
-                  <span className="label tnum" style={{ color: 'var(--faint)', fontSize: 9, flexShrink: 0 }}>{new Date(r.createdAt * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                </a>
-              ))}
+          <a href="#/r/28" style={{ textDecoration: 'none', display: 'block' }}>
+            <div className="panel" style={{ padding: '18px 22px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 20, transition: 'border-color .15s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className="tnum" style={{ fontSize: 18, color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>#{liveReceipt.jobId?.toString?.() ?? LIVE_RECEIPT_ID}</span>
+                <span className="label" style={{ color: liveReceipt.resolved ? 'var(--gain)' : 'var(--signal)', fontSize: 9, border: `1px solid color-mix(in oklch, ${liveReceipt.resolved ? 'var(--gain)' : 'var(--signal)'} 40%, transparent)`, borderRadius: 2, padding: '3px 7px' }}>
+                  {liveReceipt.resolved ? '✓ RESOLVED' : '… PENDING'}
+                </span>
+              </div>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div className="label" style={{ fontSize: 9, color: 'var(--faint)', letterSpacing: '0.14em' }}>INTENT {liveReceipt.intentId?.slice?.(0, 10)}… · ANSWER COMMITMENT</div>
+                <div className="tnum" style={{ fontSize: 12.5, color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: 4, wordBreak: 'break-all' }}>
+                  {liveReceipt.answerHash?.slice?.(0, 10)}…{liveReceipt.answerHash?.slice?.(-8)}
+                </div>
+              </div>
+              <div className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>
+                real miner → callback → locked · view the full provenance →
+              </div>
             </div>
-          )}
+          </a>
         </div>
+      )}
       </section>
 
       {/* ---- HOW IT WORKS (anchor for #/how) ---- */}
@@ -287,6 +304,24 @@ export default function LandingPage({ wallet, go }) {
           ))}
           <div className="label" style={{ fontSize: 9, color: 'var(--faint)', padding: '8px 0 4px', lineHeight: 1.6 }}>
             diamond + usdc are protocol constants, verified on-chain. registry source is verified on Blockscout.
+          </div>
+        </div>
+
+        {/* closing CTA */}
+        <div style={{ marginTop: 56, borderTop: '1px solid var(--line)', paddingTop: 56, textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(26px, 4vw, 44px)', letterSpacing: '-0.02em', color: 'var(--ink)', maxWidth: '22ch', margin: '0 auto', lineHeight: 1.1 }}>
+            Ask the network. Keep the receipt.
+          </h2>
+          <p style={{ marginTop: 14, fontSize: 14, color: 'var(--muted)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.7 }}>
+            One question, one real Telegraph job, one immutable on-chain record — verifiable by anyone, from the chain, without trusting DOCKET.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 28 }}>
+            <button onClick={() => go('dashboard')} className="act act-solid" style={{ fontSize: 13, padding: '12px 26px', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+              Enter the dashboard <span aria-hidden>→</span>
+            </button>
+            <button onClick={() => go('dashboard/receipts')} className="act" style={{ fontSize: 13, padding: '12px 26px' }}>
+              View the receipts
+            </button>
           </div>
         </div>
       </section>
