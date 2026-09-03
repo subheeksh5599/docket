@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/cover.png" alt="DOCKET — Put a question on the record. A real Telegraph miner answers; the receipt is minted on-chain, immutable, independently verifiable." width="100%" />
+<img src="assets/cover.png" alt="DOCKET — Put a question on the record. The Telegraph network resolves it on-chain; the receipt is minted, immutable, independently verifiable." width="100%" />
 
 &nbsp;
 
@@ -15,7 +15,7 @@
 ![Protocol](https://img.shields.io/badge/protocol-Telegraph%20ERC--8183-3ddc91)
 ![Stack](https://img.shields.io/badge/Solidity%20·%20Foundry%20·%20React%2019%20·%20viem-14151a)
 
-DOCKET turns one factual question into a permanent on-chain receipt produced by the **Telegraph network's own payment callback** — not by us, and not by you. You ask. A real Telegraph miner answers through the protocol. The question, the answer commitment, the miner and the timestamp are written on-chain in the same transaction that pays the miner, then **locked** — the contract has no update function. Anyone can verify the record in ten seconds from any RPC, no DOCKET involved.
+DOCKET turns one factual question into a permanent on-chain receipt produced by the **Telegraph network's own payment callback** — not by us, and not by you. You ask. The network resolves the job through the protocol. The question, the answer commitment, the resolver and the timestamp are written on-chain in the same transaction that pays the resolver, then **locked** — the contract has no update function. Anyone can verify the record in ten seconds from any RPC, no DOCKET involved.
 
 ### ▶ Live — a real receipt exists on Base Sepolia today
 
@@ -29,16 +29,16 @@ Built for the **Telegraph Protocol Hackathon** · Season I · H1 · Track 3 (App
 
 AI answers now drive real decisions — a price check, a contract review, a safety verdict — but the evidence behind those decisions is usually a screenshot or a copied chat line. Anyone can fake a screenshot. A judge, a counterparty or an auditor is never forced to trust one.
 
-**DOCKET is that evidence, as a hard on-chain artifact.** You ask a question. Your receipt contract escrows testnet USDC into the Telegraph Diamond — the protocol's own payment rail — and issues an ERC-8183 `createJob`. The protocol routes the job to a real registered miner. When the miner resolves it, the **same callback that pays the miner** writes the receipt into your contract: question hash, answer commitment, intent, timestamp. One write. Then locked — there is no update path, no delete button, no database to hack.
+**DOCKET is that evidence, as a hard on-chain artifact.** You ask a question. Your receipt contract escrows testnet USDC into the Telegraph Diamond — the protocol's own payment rail — and issues an ERC-8183 `createJob`. The protocol routes the job and a network resolver answers; when it resolves, the **same callback that pays the resolver** writes the receipt into your contract: question hash, answer commitment, intent, timestamp. One write. Then locked — there is no update path, no delete button, no database to hack.
 
 ```
 You ask ──► ReceiptRegistry escrows USDC ──► createJob (ERC-8183) on the Telegraph Diamond
                                                  │
                                                  ▼
-                                  protocol routes to a real miner
+                                  protocol routes the job; a network resolver answers
                                                  │
                                                  ▼
-                                  miner answers ──► on-chain resolve
+                                  resolver answers ──► on-chain resolve
                                                  │
                                                  ▼
                        callback writes the immutable receipt (locked forever)
@@ -57,9 +57,9 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
 - [The problem DOCKET solves](#the-problem-docket-solves)
 - [Why a screenshot isn't evidence](#why-a-screenshot-isnt-evidence)
 - [How DOCKET works](#how-docket-works)
-  - [1 · You ask, the question is committed before any miner sees it](#1--you-ask-the-question-is-committed-before-any-miner-sees-it)
+  - [1 · You ask, the question is committed before the network sees it](#1--you-ask-the-question-is-committed-before-the-network-sees-it)
   - [2 · Escrow + createJob on the Diamond](#2--escrow--createjob-on-the-diamond)
-  - [3 · A real miner answers on-chain](#3--a-real-miner-answers-on-chain)
+  - [3 · A network resolver answers on-chain](#3--a-network-resolver-answers-on-chain)
   - [4 · The callback mints the receipt — one write](#4--the-callback-mints-the-receipt--one-write)
   - [5 · Locked. No update function exists.](#5--locked-no-update-function-exists)
 - [The live receipt](#the-live-receipt)
@@ -84,7 +84,7 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
 
 ## ▶ See it in one command
 
-A receipt already exists on the live registry — job **#24**, a real `CRYPTO_PRICE` question answered by a real Telegraph miner. Verify it from any RPC, no DOCKET code, no DOCKET server:
+A receipt already exists on the live registry — job **#24**, a real `CRYPTO_PRICE` question resolved on-chain through the Telegraph network. Verify it from any RPC, no DOCKET code, no DOCKET server:
 
 ```bash
 cast call 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48 \
@@ -135,7 +135,7 @@ DOCKET receipt verification
 RESULT: RECEIPT VERIFIED - immutable on-chain receipt exists for job 24
 ```
 
-That is the product in one command: an immutable on-chain record, produced by a real miner through the real protocol, independently verifiable with zero DOCKET infrastructure.
+That is the product in one command: an immutable on-chain record, resolved through the real protocol and independently verifiable with zero DOCKET infrastructure.
 
 ---
 
@@ -171,17 +171,17 @@ DOCKET treats **the record itself** as the product. The artifact is minted by th
 
 ## How DOCKET works
 
-### 1 · You ask, the question is committed before any miner sees it
+### 1 · You ask, the question is committed before the network sees it
 
 You type a question and pick an intent. `ReceiptRegistry.requestVerification(intentId, params, question, budget)` runs **before** anything reaches the network: it reverts on an empty question or zero budget, and commits `questionHash = keccak256(abi.encode(question))` and the intent to the registry's own storage. The ask is on the record first.
 
 ### 2 · Escrow + createJob on the Diamond
 
-The registry pulls the budget (testnet USDC) from your wallet, escrows it into the **Telegraph Diamond** — the protocol's own escrow; DOCKET never custodies funds — and issues an ERC-8183 `createJob(intentId, params, callback=registry)`. The job is now in the protocol's on-chain state, waiting for a miner.
+The registry pulls the budget (testnet USDC) from your wallet, escrows it into the **Telegraph Diamond** — the protocol's own escrow; DOCKET never custodies funds — and issues an ERC-8183 `createJob(intentId, params, callback=registry)`. The job is now in the protocol's on-chain state, waiting for the network to resolve it.
 
-### 3 · A real miner answers on-chain
+### 3 · A network resolver answers on-chain
 
-Telegraph routes the job to a real registered miner by rank. The miner runs the intent, and the job resolves on the Diamond. If it never resolves, the user calls `cancelStuckJob` and the escrow returns to the Diamond escrow — nothing is silently lost.
+The job sits in the protocol's on-chain state, waiting for the network to resolve it. Telegraph routes the job; a network resolver (a node running the protocol's client) answers and the job resolves on the Diamond. If it never resolves, the user calls `cancelStuckJob` and the escrow returns to the Diamond escrow — nothing is silently lost.
 
 ### 4 · The callback mints the receipt — one write
 
@@ -195,7 +195,7 @@ The receipt struct is written once and `locked[jobId]` is set. `ReceiptRegistry`
 
 ## The live receipt
 
-A real job on the real testnet, answered by a real Telegraph miner, verified from three independent RPCs (sepolia.base.org, publicnode, drpc — identical reads).
+A real job on the real testnet, resolved on-chain through the Telegraph network, verified from three independent RPCs (sepolia.base.org, publicnode, drpc — identical reads).
 
 | Field | Value |
 |---|---|
@@ -243,8 +243,8 @@ No DOCKET server, no DOCKET database, no DOCKET key is involved in any of these.
                │ createJob (ERC-8183)
                ▼
 ┌─ Telegraph Diamond (the protocol) ───────────────────────────┐
-│  routes to real registered miner by rank                     │
-│  miner resolves ──► settlement ──► callback → registry       │
+│  routes the job; a network resolver answers                  │
+│  resolver answers ──► settlement ──► callback → registry      │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -277,7 +277,7 @@ The live receipt #24's `questionHash` is asserted as a known-answer vector in So
 |---|---|
 | Receipt edited or deleted after mint | **Impossible by construction** — no update function exists on the registry |
 | Receipt minted by someone other than the protocol | Callback requires `msg.sender == Diamond`; wrong-diamond callbacks revert (tested) |
-| Question swapped after the fact | `questionHash` + `intentId` committed at request time, before any miner sees the question (tested) |
+| Question swapped after the fact | `questionHash` + `intentId` committed at request time, before the network sees the question (tested) |
 | Fake success / no real answer | Receipt only mints via the Diamond's callback; `answerHash` must be non-zero; the job must be terminal |
 | Registry custodies user funds | It never does — escrow lives on the Diamond, the protocol's own rail. Users recover unresolved escrow via `cancelStuckJob` |
 | Owner steals or rewrites receipts | Owner cannot touch receipts or escrowed funds — only intent labels + stray-token withdrawal (tested) |
@@ -289,9 +289,9 @@ The live receipt #24's `questionHash` is asserted as a known-answer vector in So
 
 Telegraph is load-bearing — not a logo on a page:
 
-- **ERC-8183 on-chain jobs** (`createJob` → miner routing → `subnetMessage` callback) are the entire delivery mechanism. The receipt exists *because* the protocol settled a job.
-- **The payment rail is the trust rail.** The callback that mints the receipt is the same callback that pays the miner — so a receipt proves a miner was actually paid to answer.
-- **Real miners, real intents.** Jobs route to Telegraph's registered miners by rank on the live testnet (129 miners online at build time).
+- **ERC-8183 on-chain jobs** (`createJob` → network routing → `subnetMessage` callback) are the entire delivery mechanism. The receipt exists *because* the protocol settled a job.
+- **The payment rail is the trust rail.** The callback that mints the receipt is the same callback that pays the resolver — so a receipt proves a network participant was actually paid on-chain to answer.
+- **Real jobs on a live testnet.** Jobs are created on and resolved through the Telegraph Diamond on the live testnet (129 registered miners online at build time — the protocol routes to them; DOCKET records the outcome, it does not name the resolver).
 - **The protocol's addresses are verified live**, not copied from memory — the Diamond, USDC, job base price (1,000,000 = 1 USDC) and 21 facets were all read on-chain and pinned in `docs/TELEGRAPH_DEPLOYMENT.md`.
 
 ---
@@ -312,7 +312,7 @@ Telegraph is load-bearing — not a logo on a page:
 
 | Capability | Status |
 |---|---|
-| Live end-to-end — real `createJob` → real miner → real callback → receipt minted + locked | **Real** — **4 live receipts** on Base Sepolia, each verified from 2 independent RPCs |
+| Live end-to-end — real `createJob` → network resolver → real callback → receipt minted + locked | **Real** — **4 live receipts** on Base Sepolia, each verified from 2 independent RPCs |
 | Multi-intent | **Real** — 3 intents with live receipts: CRYPTO_PRICE (#24, #28, #32), GAS_PRICE (#30), WEATHER_CHECK (#31) — each with distinct intentId, questionHash, answerHash |
 | Live end-to-end with a FRESH wallet | **Real** — new wallet `0x3750d9d7…` funded + driven through approve → request → receipt (~15s for price intents) |
 | Answer re-hash from callback calldata | **Real + LIVE PASS** — decoded real resolving txs (`cast calldata-decode` + anvil trace) and recomputed canonical hashes → **match on-chain answerHashes exactly** (exposed + fixed a flat-vs-struct ABI encoding bug) |

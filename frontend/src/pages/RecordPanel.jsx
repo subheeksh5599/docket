@@ -8,7 +8,7 @@ import { receiptPermalink, explorerTx } from '../lib/evidence';
 // is real: it polls the registry until the callback mints the receipt.
 
 const INTENTS = [
-  { name: 'CRYPTO_PRICE', desc: 'Current price of a token — with the source the miner cites.' },
+  { name: 'CRYPTO_PRICE', desc: 'Current price of a token — with the source the resolver cites.' },
   { name: 'ONCHAIN_TX_LOOKUP', desc: 'Status, block, sender and value of a transaction hash.' },
   { name: 'WALLET_BALANCE_CHECK', desc: 'Live balance of a wallet address on Base Sepolia.' },
   { name: 'GAS_PRICE', desc: 'Current gas price the network observes.' },
@@ -21,9 +21,9 @@ const INTENTS = [
 
 const STAGES = [
   { k: 'job', label: 'JOB CREATED', desc: 'ERC-8183 job on the Diamond' },
-  { k: 'miner', label: 'MINER', desc: 'Routed to a real registered miner' },
+  { k: 'miner', label: 'MINER', desc: 'Routed through the network to a resolver' },
   { k: 'submitted', label: 'SUBMITTED', desc: 'Network response received' },
-  { k: 'settled', label: 'SETTLED', desc: 'Callback accepted, miner paid' },
+  { k: 'settled', label: 'SETTLED', desc: 'Callback accepted, resolver paid' },
   { k: 'receipt', label: 'RECEIPT MINTED', desc: 'Answer commitment locked' },
 ];
 
@@ -123,7 +123,7 @@ export default function RecordPanel({ wallet, go }) {
         {/* CTA */}
         <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <button className="act act-solid" style={{ padding: '11px 20px', fontSize: 12 }} onClick={submit} disabled={phase === 'approving' || phase === 'waiting' || !question.trim()}>
-            {phase === 'approving' ? 'Approving USDC…' : phase === 'waiting' ? 'Awaiting miner…' : 'Put it on the record →'}
+            {phase === 'approving' ? 'Approving USDC…' : phase === 'waiting' ? 'Awaiting the network…' : 'Put it on the record →'}
           </button>
           {phase === 'done' && result?.resolved && (
             <button className="act" onClick={() => go(`dashboard/receipts`)}>View in receipts →</button>
@@ -170,7 +170,7 @@ export default function RecordPanel({ wallet, go }) {
           <Stat label="CHAIN" v="Base Sepolia" />
           <Stat label="JOB" v={result.jobId ? `#${result.jobId}` : '—'} />
           <Stat label="TX" v={result.txHash ? `${result.txHash.slice(0, 6)}…${result.txHash.slice(-4)}` : '—'} href={result.txHash ? explorerTx(result.txHash) : null} />
-          <Stat label="STATUS" v={result.resolved ? '✓ RESOLVED' : 'AWAITING MINER'} live={!result.resolved} />
+          <Stat label="STATUS" v={result.resolved ? '✓ RESOLVED' : 'AWAITING RESOLUTION'} live={!result.resolved} />
         </div>
       )}
     </div>

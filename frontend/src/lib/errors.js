@@ -14,7 +14,7 @@ export const ERRORS = {
   JOB_NOT_FOUND: { message: 'No job with that id was found on-chain.', retry: 'Double-check the job id.' },
   JOB_PENDING: { message: 'The job is still being processed by the network.', retry: 'Wait — this page updates automatically.' },
   JOB_EXPIRED: { message: 'The job was not resolved and its escrow can be recovered.', retry: 'Cancel it to refund your escrow.' },
-  CALLBACK_PENDING: { message: 'The miner answered; the result is being settled on-chain.', retry: 'Wait for the callback transaction to confirm.' },
+  CALLBACK_PENDING: { message: 'The network answered; the result is being settled on-chain.', retry: 'Wait for the callback transaction to confirm.' },
   CALLBACK_FAILED: { message: 'The callback could not be delivered.', retry: 'The receipt may still be readable from the resolving transaction.' },
   RECEIPT_NOT_FOUND: { message: 'No receipt exists for that job yet.', retry: 'If the job resolved, wait for the callback; otherwise check the job state.' },
   RECEIPT_ALREADY_MINTED: { message: 'This job already has a receipt. Receipts are immutable.', retry: 'View the existing receipt — it cannot be overwritten.' },

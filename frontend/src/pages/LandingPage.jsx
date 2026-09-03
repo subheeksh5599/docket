@@ -20,31 +20,31 @@ const EVIDENCE = [
     d: 'Type a factual question, pick an intent, escrow 1 USDC (testnet). DOCKET writes two transactions — approve, then requestVerification — and a real ERC-8183 job is created on the Telegraph Diamond.',
   },
   {
-    n: '02', k: 'ANSWERED', t: 'A real miner, not us.',
+    n: '02', k: 'ANSWERED', t: 'Resolved on-chain, not by us.',
     shape: 'signal',
-    d: 'Telegraph routes the job to a registered miner. The miner resolves it and the protocol settles the payment — DOCKET never touches the answer, the miner, or the escrow. DOCKET is not Telegraph; it sits on top of it.',
+    d: 'The job is routed through Telegraph and resolved by the network — the resolver gets paid from escrow in the same transaction. DOCKET never touches the answer or the escrow. DOCKET is not Telegraph; it sits on top of it.',
   },
   {
     n: '03', k: 'LOCKED', t: 'The receipt cannot lie.',
     shape: 'loop',
-    d: 'The same callback that pays the miner writes the answer commitment to the ReceiptRegistry on Base Sepolia. One write, then locked — no update function exists. Anyone can re-verify from any RPC, forever.',
+    d: 'The same callback that pays the resolver writes the answer commitment to the ReceiptRegistry on Base Sepolia. One write, then locked — no update function exists. Anyone can re-verify from any RPC, forever.',
   },
 ];
 
 const DEFAULT = {
   heading: 'Put a question on the record.',
   eyebrow: '// built on',
-  body: 'DOCKET turns a factual question into a permanent, independently checkable receipt — produced by a real Telegraph miner through the protocol\u2019s own payment callback, locked on-chain forever. Not a screenshot. Not a claim. A receipt.',
+  body: 'DOCKET turns a factual question into a permanent, independently checkable receipt — resolved through the protocol\u2019s own payment callback and locked on-chain forever. Not a screenshot. Not a claim. A receipt.',
 };
 
 const FLOW = [
   ['USER', 'Asks a question + funds escrow in the DOCKET app.'],
   ['DOCKET', 'Frontend only — no backend. Writes two transactions: approve USDC, then requestVerification on the registry.'],
   ['ERC-8183 JOB', 'The registry escrows USDC into the Telegraph Diamond and calls createJob — a standard Telegraph job.'],
-  ['TELEGRAPH', 'Routes the job to a real registered miner (the protocol\'s own network — DOCKET is not Telegraph).'],
-  ['MINER', 'A real registered miner resolves the job and submits the response.'],
-  ['SETTLEMENT', 'The protocol verifies the submission and settles the miner\'s payment from escrow.'],
-  ['CALLBACK', 'The same callback that pays the miner calls back into the ReceiptRegistry with the answer commitment.'],
+  ['TELEGRAPH', 'Routes the job and coordinates resolution (the protocol\'s own network — DOCKET is not Telegraph).'],
+  ['MINER / RESOLVER', 'A network participant resolves the job and submits the response.'],
+  ['SETTLEMENT', 'The protocol verifies the submission and settles the resolver\'s payment from escrow.'],
+  ['CALLBACK', 'The same callback that pays the resolver calls back into the ReceiptRegistry with the answer commitment.'],
   ['RECEIPT REGISTRY', 'A DOCKET smart contract on Base Sepolia. It verifies the caller is the Diamond, then writes the receipt.'],
   ['IMMUTABLE RECEIPT', 'One write. Locked forever. No update function exists in the bytecode.'],
 ];
@@ -52,16 +52,16 @@ const FLOW = [
 const STEPS = [
   { n: '01', title: 'You ask', d: 'A factual question, an intent, and 1 USDC escrow (testnet).' },
   { n: '02', title: 'A real job', d: 'The registry issues an ERC-8183 createJob on the Telegraph Diamond.' },
-  { n: '03', title: 'A real miner', d: 'Telegraph routes the job to a registered miner, who resolves it.' },
+  { n: '03', title: 'A network resolver', d: 'Telegraph routes the job; a network participant resolves it on-chain.' },
   { n: '04', title: 'One callback', d: 'The payment callback writes the answer commitment to the registry.' },
   { n: '05', title: 'Locked', d: 'The receipt is immutable — provable from any RPC, forever.' },
 ];
 
 const SPONSOR_COPY = {
   telegraph: {
-    heading: 'Answered by a real miner.',
+    heading: 'Resolved and paid on-chain.',
     eyebrow: '// why Telegraph',
-    body: 'Telegraph is the network doing the work: a registered miner resolves your job through ERC-8183 and gets paid from escrow. DOCKET is an application layer on top — it never pretends to be the network.',
+    body: 'Telegraph is the network doing the work: your job routes through it, a network resolver answers through ERC-8183, and the resolver is paid from escrow. DOCKET is an application layer on top — it never pretends to be the network.',
   },
   base: {
     heading: 'Locked on Base Sepolia.',
@@ -71,7 +71,7 @@ const SPONSOR_COPY = {
   erc: {
     heading: 'A standard job. A standard receipt.',
     eyebrow: '// why ERC-8183',
-    body: 'ERC-8183 is Telegraph\u2019s job standard. DOCKET issues a real createJob, and the protocol\u2019s own payment callback writes the receipt — so the receipt is minted by the exact mechanism that pays miners for work.',
+    body: 'ERC-8183 is Telegraph\u2019s job standard. DOCKET issues a real createJob, and the protocol\u2019s own payment callback writes the receipt — so the receipt is minted by the exact mechanism that pays resolvers for work.',
   },
 };
 
@@ -235,7 +235,7 @@ export default function LandingPage({ wallet, go }) {
                 </div>
               </div>
               <div className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>
-                real miner → callback → locked · view the full provenance →
+                resolved on-chain by the network → callback → locked · view the full provenance →
               </div>
             </div>
           </a>
