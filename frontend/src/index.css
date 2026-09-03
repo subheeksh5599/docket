@@ -19,6 +19,11 @@
   --dark: oklch(0.17 0.01 265);
   --dark-ink: oklch(0.96 0.003 250);
   --radius: 3px;
+
+  /* Typography — loaded via Google Fonts in index.html */
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-pixel: 'Pixelify Sans', 'Spline Sans Mono', ui-monospace, monospace;
 }
 
 @theme inline {
@@ -32,24 +37,6 @@
   --color-gain: var(--gain);
   --color-signal: var(--signal);
 
-  /* Legacy aliases (older components keep semantic names) */
-  --color-paper: var(--bg);
-  --color-paper-2: var(--bg-2);
-  --color-surface-2: var(--surface-2);
-  --color-line-strong: var(--line-strong);
-  --color-obsidian-shell: var(--bg);
-  --color-pure-white: var(--ink);
-  --color-mint-frost: var(--surface);
-  --color-deep-abyss: var(--surface-2);
-  --color-charcoal: var(--bg-2);
-  --color-neon-pulse: var(--gain);
-  --color-mint-whisper: var(--faint);
-  --color-signal-yellow: var(--loss);
-  --color-pure-black: var(--dark);
-
-  --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
-  --font-pixel: var(--font-pixel);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -280,3 +267,31 @@ a { color: inherit; text-decoration: none; }
 .stat-row:last-child { border-bottom: 0; }
 .stat-k { font-family: var(--font-mono), monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
 .stat-v { font-family: var(--font-mono), monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* ---- landing hero effects ---- */
+/* blinking caret trailing the typed headline */
+@keyframes twBlink { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
+.tw-caret {
+  display: inline-block;
+  width: 0.07em; min-width: 3px; height: 0.74em;
+  margin-left: 0.06em; vertical-align: -0.04em;
+  background: currentColor;
+  animation: twBlink 0.9s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) { .tw-caret { animation: none; } }
+
+/* hero copy crossfade on sponsor hover — replays so the change is legible */
+@keyframes heroSwap {
+  from { opacity: 0; transform: translateY(9px); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+.hero-swap { animation: heroSwap 0.42s cubic-bezier(0.25, 1, 0.5, 1) both; display: inline-block; }
+@media (prefers-reduced-motion: reduce) { .hero-swap { animation: none; } }
+
+/* dithered evidence cell canvas area */
+.dither-cell { height: 130px; width: 100%; display: block; }
+.dither-cell canvas { width: 100%; height: 100%; display: block; }
+
+/* hero CTA hover (border-ink on hover like the reference) */
+.hero-ext { transition: color 0.2s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; }
+.hero-ext:hover { color: var(--ink); border-color: var(--ink); }
