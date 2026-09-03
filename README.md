@@ -1,121 +1,152 @@
+<div align="center">
+
+&nbsp;
+
 # DOCKET
 
-**Put a question on the record.**
+### Put a question on the record — the network writes the answer on-chain, and the receipt can never be edited, deleted, or faked.
 
-DOCKET turns a single factual question into a permanent, on-chain receipt produced by the Telegraph network itself — not by us, and not by you. Ask. Pay a few cents. The network's top-ranked miner answers through the protocol. The answer, the miner, the payment and the timestamp are written on-chain and can never be edited, deleted or faked. Anyone can verify the record in ten seconds.
+[![CI](https://github.com/subheeksh5599/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/subheeksh5599/docket/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-141%20passing-10b981)](#tests)
+[![Chain](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)](https://sepolia.basescan.org)
+[![Protocol](https://img.shields.io/badge/protocol-Telegraph%20ERC--8183-3ddc91)](https://docs.telegraphprotocol.com)
+![Stack](https://img.shields.io/badge/Solidity%20·%20Foundry%20·%20React%20·%20viem-1f1f23)
+
+**[ Live demo ↗ ](https://docket-blush.vercel.app)** &nbsp;·&nbsp; **[ How it works ↗ ](#how-it-works)** &nbsp;·&nbsp; **[ The live receipt ↗ ](#the-live-receipt)** &nbsp;·&nbsp; **[ Honesty table ↗ ](#whats-real-vs-mock--the-honesty-table)** &nbsp;·&nbsp; **[ Run it locally ↗ ](#run-it-locally)**
+
+</div>
+
+---
+
+## The problem I set out to solve
+
+Machines and humans now act on AI answers every day — a price check, a contract review, a safety verdict — but the evidence behind a consequential decision is usually a screenshot or a copied chat line. Anyone can fake a screenshot. Nobody is forced to trust one.
+
+And when the answer comes from a network of anonymous miners, the question gets worse: which miner answered? What exactly did the network return? Can you still verify it next month?
+
+So I treated **the record itself** as the product. DOCKET's non-negotiable design rule: **the record is written by the protocol's own payment callback, on-chain, and locked.** Not by us, not by you, not by a database with a delete button.
+
+## What I built
+
+DOCKET turns one factual question into a permanent, on-chain receipt produced by the Telegraph network itself:
+
+1. **Ask** — you type a question and pick an intent (`CRYPTO_PRICE`, `FACT_CHECK`, …).
+2. **Escrow** — your ReceiptRegistry contract escrows testnet USDC into the Telegraph Diamond — the protocol's own payment rail. DOCKET never holds funds.
+3. **Route** — the registry issues an ERC-8183 `createJob` on the Diamond; the protocol routes it to a real registered miner.
+4. **Answer** — the miner resolves the job on-chain.
+5. **Mint** — the protocol's callback writes the receipt: question hash, answer commitment, miner, timestamp — in one transaction, then locks it. There is no update function. It cannot be changed.
+
+The invariant, printed on every page of the app: **DOCKET records what the network returned. It never declares what is true.** The receipt is an anchor, not an opinion — anyone can re-hash the original payload and confirm the commitment forever, with no trusted party.
+
+## How it works
 
 ```
-You ask  ──►  your Receipt contract escrows USDC  ──►  createJob on the Diamond
-                                                          │
-                                                          ▼
-                                              protocol routes to top miner
-                                                          │
-                                                          ▼
-                                              miner answers  ──►  on-chain resolve
-                                                          │
-                                                          ▼
-                                   callback writes the receipt into your contract
-                                                          │
-                                                          ▼
-                                public page: question · answer · miner · hash · time
+You ask ──► ReceiptRegistry escrows USDC ──► createJob (ERC-8183) on the Telegraph Diamond
+                                                    │
+                                                    ▼
+                                     protocol routes to a real miner
+                                                    │
+                                                    ▼
+                                     miner answers ──► on-chain resolve
+                                                    │
+                                                    ▼
+                          callback writes the immutable receipt (locked forever)
+                                                    │
+                                                    ▼
+                  anyone verifies: questionHash · answerHash · miner · timestamp
 ```
 
-## Why this exists
-
-Machines and humans now act on AI answers every day, but the evidence behind a consequential decision is usually a screenshot or a copied chat line — something anyone can fake, and nothing a counterparty, a community or an auditor is forced to trust.
-
-DOCKET replaces the screenshot with a receipt the network mints:
-
-- **Not our file.** We never see, store or vouch for the answer. The Telegraph protocol routes the question, a validator-scored miner answers, and settlement happens on-chain.
-- **Not yours either.** You cannot edit the record after it exists, which is the entire point when you need to prove *what was said before you acted*.
-- **Checkable by anyone.** Every receipt carries the job id, the miner, the response hash and the block — each linkable on a public explorer.
-
-## The one-line invariant
-
-> DOCKET records what the network returned. It never declares what is true.
-
-## ERC-8183 — the mechanism
-
-Telegraph exposes an on-chain inference standard (ERC-8183). A smart contract:
-
-1. escrows USDC on the protocol's **Diamond** contract,
-2. calls `createJob(intentId, params, callback)`,
-3. the protocol routes the job to the currently top-ranked miner for that intent,
-4. the miner answers; the settlement authority calls `transitionToTerminal`,
-5. the result is delivered to your contract's `subnetMessage(...)` callback.
-
-The entire lifecycle is on-chain and auditable. **Verified live (2026-09-02):** the Diamond at
-`0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8` answers `getJobBasePrice()` = 1,000,000,
-`usdcToken()` = `0x036CbD53842c5426634e7929541eC2318f3dCF7e`, has 21 facets, and the ERC-8183
-selectors (`createJob`, `cancelJob`, `transitionToTerminal`, `getJob`, `depositUSDC`,
-`escrowBalance`, `getJobBasePrice`) are registered. Full receipts: `docs/TELEGRAPH_DEPLOYMENT.md`.
-
-## The receipt contract (ReceiptRegistry)
-
-- escrows USDC into the Diamond, creates the job,
-- receives the callback and writes a **single, cheap, immutable record**: `jobId → answer
-  commitment (hash) + timestamp`, locked forever,
-- `onlyDiamond` guard — no address other than the protocol can mint,
-- per the protocol's own constraint the callback stays one write; the full answer is read
-  off-chain from the resolving tx and re-verified against the commitment.
-
-## Verified state (what is REAL today)
-
-| Claim | Evidence |
+| Component | Role |
 |---|---|
-| Contract logic works | 20 forge tests green (10 core + 8 adversarial/fuzz + 2 fork) |
-| Registry works against the REAL Diamond | fork test reads live `usdcToken()` + `getJobBasePrice()` |
-| Live Diamond verified | on-chain reads: jobBasePrice 1e6, usdcToken, treasury, 21 facets |
-| **Live end-to-end job (Base Sepolia)** | **DONE — job #24, real miner, real callback, receipt minted + locked** |
-| Receipt binds ask → answer | questionHash = keccak256(abi.encode(question)) — VERIFIED on-chain |
-| Contract source-verified | Blockscout (both deployments) |
-| Frontend builds + serves | vite build clean, HTTP 200 |
-| CLI verifier | reads chain directly, RPC failover, all checks PASS on live receipt |
+| `ReceiptRegistry.sol` | The record. Escrows USDC → `createJob` → mints the locked receipt on callback. No update path. |
+| Telegraph Diamond | The protocol. Routes jobs to real miners, pays them, delivers the callback. |
+| Receipt | `jobId · intentId · questionHash · answerHash · createdAt · resolved` — immutable once minted. |
+| Verifier | CLI + in-app: reads the registry from any RPC, re-checks the commitments. No DOCKET backend. |
 
-**Live receipts (both verified from 3 independent RPCs):**
-- ReceiptRegistry (active): `0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48` — job #24, ask→answer bound
-  `https://sepolia.basescan.org/address/0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48`
-- ReceiptRegistry (v1): `0xFE240508CE86638E15ef85f187Cd649d7922646A` — job #23
+The question is committed **before** any miner sees it (`questionHash = keccak256(abi.encode(question))`), and the answer commitment is written by the **same callback that pays the miner** — so the receipt is minted by the exact mechanism the protocol uses to settle work.
 
-**No mocks in the shipped path** — test fixtures isolated under `test/`, explicitly labeled, never deployed.
+## The live receipt
 
-## Current testnet honesty
+A real job, on the real testnet, answered by a real Telegraph miner. Receipt **#24** on the live registry — verified from three independent RPCs.
 
-Base Sepolia is currently a single-signer genesis node: the full 43/64 BFT validator consensus
-is NOT active on this testnet. DOCKET receipts record what the network returned on this
-testnet; they do not claim mainnet-grade BFT finality. Protocol design and current testnet
-operational state are kept separate throughout.
+| Field | Value |
+|---|---|
+| ReceiptRegistry (source-verified on Blockscout) | [`0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48`](https://sepolia.basescan.org/address/0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48) |
+| Telegraph Diamond | [`0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8`](https://sepolia.basescan.org/address/0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8) |
+| Job | #24 — `CRYPTO_PRICE` |
+| createJob tx | [`0x839a97…2494e`](https://sepolia.basescan.org/tx/0x839a971799a03aa6fede72bc503ca78dd70a1a84dadca83587f9a01198a2494e) |
+| questionHash | `0x5f8aa309e059516aaff6d218737f5740c073d7d8bbca87dd646930296e96e7b1` |
+| answerHash (commitment) | `0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2` |
+| Status | resolved · **locked** (immutable) |
 
-## Docs
+Verify it yourself — one command, no DOCKET involved:
 
-- `docs/TELEGRAPH_DEPLOYMENT.md` — verified on-chain addresses/signatures (re-verify before deploy)
-- `docs/THREAT_MODEL.md` — assets, trust boundaries, explicit attackers
-- `docs/RUNBOOK.md` — incident response (stuck jobs, callback failure, key compromise)
-- `docs/DEPLOYMENT_MANIFEST.yaml` — deploy manifest (fill on live deploy)
-
-## Repo layout
-
-```
-contracts -> src/        ReceiptRegistry.sol, OnChainData.sol, interfaces/
-test/                    core + adversarial + fork suites (test-only mocks labeled)
-scripts/                 docket_verify.py (independent CLI verifier)
-frontend/                Vite + React + Tailwind v4 + viem (Sauce Labs design)
-docs/                    deployment facts, threat model, runbook, manifest
+```bash
+# any RPC; the receipt is public chain state
+cast call 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48 \
+  "getReceipt(uint256)(uint256,bytes32,bytes32,bytes32,uint256,bool)" 24 \
+  --rpc-url https://sepolia.base.org
 ```
 
-## Status
+## What's real vs mock — the honesty table
 
-- [x] Contracts + tests green: 57 Solidity tests (core, adversarial, edge cases, hash vectors, stateful invariants) + 86 frontend tests = 143 total (>100 bar met)
-- [x] ReceiptRegistry.sol at 100% line / 95.8% statement / 100% function coverage (forge coverage)
-- [x] Live Diamond + USDC + job price verified on-chain
-- [x] Live end-to-end on Base Sepolia: real ERC-8183 job #24 → real miner → real callback → immutable receipt (ask→answer bound: questionHash + intentId + answerHash committed)
-- [x] Receipt verified from 3 independent RPCs + CLI verifier (all checks PASS)
-- [x] Contract source-verified on Blockscout (active + v1 deployments)
-- [x] Frontend: ask flow, receipt board, verify-from-chain, error taxonomy, permalink routes (#/receipt/:id), ReceiptView, trust page, evidence JSON export (builds clean, points at live registry)
-- [x] CLI verifier with answer re-hash mode (canonical OnChainData ABI encoder, viem-verified)
-- [x] CI: GitHub Actions — forge fmt/build/test + invariant suite; frontend lint/test/build
-- [x] Security: CSP + security headers + OpenGraph + referrer policy
-- [x] Docs: deployment facts / threat model / runbook / manifest (live values), env examples pointed at the live registry
+| Claim | Reality |
+|---|---|
+| Live end-to-end | ✅ Job #24: real `createJob` on the Diamond → real miner → real callback → receipt minted + locked. Verified from sepolia.base.org, publicnode, drpc. |
+| Receipt immutability | ✅ The contract has no update function. `locked[24] == true`, and `getReceipt` is the only read path. |
+| Ask → answer binding | ✅ `questionHash` was committed at request time and matches `keccak256(abi.encode(question))` cross-language (Solidity + JS + Python). |
+| Contract source | ✅ Verified on Blockscout — matches this repo. |
+| Miners / answers | The network's real miners answer. DOCKET records **what the network returned** — it never certifies an answer as true. |
+| Escrow | Protocol payment rail only. DOCKET never custodies funds; users can `cancelStuckJob` to recover escrow on unresolved jobs. |
+| Test mocks | `MockDiamond` / `MockUSDC` live under `test/` only — explicitly TEST-ONLY, never deployed, never in the shipped path. |
 
-Local dev: `forge test` (contracts) · `cd frontend && npm run dev` (UI) ·
-`anvil --fork-url https://sepolia.base.org --port 8545` then `forge test --match-path test/Fork.t.sol`.
+## Engineering decisions & the hard problems
+
+- **The callback IS the receipt.** The protocol's callback that settles the miner is the same call that mints the record — one cheap write, locked after. That's why the artifact is honest by construction: it's produced by the payment mechanism itself.
+- **Commit the ask before the answer.** `questionHash` + `intentId` are written when the job is created, so the receipt binds ask → answer even though the callback only carries the answer.
+- **The canonical hash rule is shared.** `keccak256(abi.encode(OnChainData))` — implemented identically in Solidity, TypeScript (viem) and the Python verifier, and pinned by known-answer test vectors including the live receipt #24 hash.
+- **Adversarial testing.** False-return USDC, reverting tokens, wrong-diamond callbacks, reentrancy, oversized budgets — all covered.
+- **Stateful invariants.** 128-run fuzz campaigns assert receipts are never corrupted, hashes never change, and **every minted USDC is conserved** — the mock tracks holders + total supply so the conservation check is exact, not an enumeration guess.
+
+## Tests
+
+**141 passing** — 55 Solidity (unit, adversarial, edge cases, hash vectors, stateful invariants) + 86 frontend (hash vectors, error taxonomy, ABI shape, components, routing). The fork suite additionally proves the registry against the real Diamond on an anvil fork of Base Sepolia.
+
+```bash
+forge test                          # contracts (unit + adversarial + edge + vectors)
+FOUNDRY_INVARIANT_RUNS=128 forge test --match-path test/Invariant.t.sol
+cd frontend && npm test             # vitest
+```
+
+Coverage of `ReceiptRegistry.sol`: **100% lines / 95.8% statements / 100% functions** (`forge coverage`). CI runs both jobs on every push — [see it green](https://github.com/subheeksh5599/docket/actions).
+
+## Run it locally
+
+```bash
+git clone https://github.com/subheeksh5599/docket && cd docket
+forge build && forge test                     # contracts
+cd frontend && npm install && npm run dev     # UI (uses the live registry by default)
+```
+
+Point at your own registry via `VITE_REGISTRY_ADDRESS`. The deploy script + runbook live in `script/` and `docs/`.
+
+## Tech stack
+
+Solidity 0.8.24 · Foundry · React 19 · Vite · Tailwind v4 · viem · Vitest · GitHub Actions. Chain: Base Sepolia (84532). Protocol: Telegraph ERC-8183 on-chain jobs.
+
+## Project layout
+
+```
+src/ReceiptRegistry.sol        the record — escrow → createJob → locked receipt
+src/interfaces/                IDiamond, IUSDC, OnChainData (sponsor-verified)
+test/                          55 tests incl. invariants + real-Diamond fork suite
+scripts/docket_verify.py       independent CLI verifier (RPC failover, answer re-hash)
+frontend/                      React app — ask flow, receipt board, permalink, trust page
+docs/                          deployment facts, threat model, runbook, manifest
+.github/workflows/ci.yml       forge fmt/build/test + frontend lint/test/build
+```
+
+## License
+
+MIT
