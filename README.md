@@ -10,7 +10,7 @@
 
 [![CI](https://github.com/subheeksh5599/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/subheeksh5599/docket/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-155%20passing-2ecc71)](#tests)
+[![Tests](https://img.shields.io/badge/tests-144%20passing-2ecc71)](#tests)
 ![Chain](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)
 ![Protocol](https://img.shields.io/badge/protocol-Telegraph%20ERC--8183-3ddc91)
 ![Stack](https://img.shields.io/badge/Solidity%20·%20Foundry%20·%20React%2019%20·%20viem-14151a)
@@ -323,10 +323,10 @@ Telegraph is load-bearing — not a logo on a page:
 | Ask → answer binding | **Real** — every `questionHash` matches `keccak256(abi.encode(question))` cross-language (Solidity + JS + Python) |
 | Contract source | **Real** — verified on Blockscout (v0.8.28), matches this repo |
 | Job price + protocol addresses | **Real** — read live from the Diamond on-chain, pinned in `docs/TELEGRAPH_DEPLOYMENT.md` |
-| 155 tests in CI (64 Solidity + 91 frontend; +2 fork tests locally) | **Real** — incl. LIVE receipt hash vectors + the DocketGate consumer suite |
+| 144 tests in CI (64 Solidity + 80 frontend; +2 fork tests locally) | **Real** — incl. LIVE receipt hash vectors + the DocketGate consumer suite |
 | Coverage of `ReceiptRegistry.sol` | **Real** — 100% lines / 95.8% statements / 100% functions (`forge coverage`) |
 | CI — both jobs green on every push | **Real** — contracts (fmt/build/test/invariant) + frontend (lint/test/build) |
-| Clean-clone production build | **Real** — fresh `git clone` → forge install → 55 tests → `npm ci` → 91 tests → vite build, all green |
+| Clean-clone production build | **Real** — fresh `git clone` → forge install → 64 tests → `npm ci` → 80 tests → vite build, all green |
 | Test mocks (`MockDiamond`, `MockUSDC`) | **TEST-ONLY** — under `test/`, never deployed, zero mock refs in the production bundle |
 | Demo video | **Not recorded** — the user records demos personally |
 
@@ -360,8 +360,8 @@ invariant_noFundsLeak()                 (runs: 128)
 invariant_jobCountMatchesJobsCreated()  (runs: 128)
 Suite result: ok. 4 passed; 0 failed
 
-Test Files  8 passed (8)
-Tests       91 passed (91)
+Test Files  7 passed (7)
+Tests       80 passed (80)
 ```
 
 | Test area | Count | What it proves |
@@ -373,7 +373,7 @@ Tests       91 passed (91)
 | DocketGate (consumer) | 9 | Act-on-receipt: allow on valid locked receipt, deny wrong hash/intent/pending/none, once-only, zero-registry |
 | Stateful invariants | 4 | Receipts never corrupted, hashes never change, **every minted USDC conserved**, no double-mint |
 | Fork (local anvil) | 2 | Registry against the REAL Diamond + real USDC on an anvil fork of Base Sepolia |
-| Frontend | 91 | Hash vectors (incl. LIVE receipt answer-hash), error taxonomy, ABI shape, components, wallet hook, routing, evidence bundle |
+| Frontend | 80 | Hash vectors (incl. LIVE receipt answer-hash), error taxonomy, ABI shape, routing, the /verify verifier |
 
 ---
 
