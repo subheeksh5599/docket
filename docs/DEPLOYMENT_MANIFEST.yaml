@@ -4,7 +4,7 @@
 # repository commit:        150309d1b93ee009247cee725a0537db1ece331a
 # frontend URL:             https://docket-blush.vercel.app
 # compiler:                 solc 0.8.28 (pinned in foundry.toml; matches Blockscout)
-# test count (CI):          144 = 64 Solidity + 80 frontend (measured 2026-09-03)
+# test count (CI):          151 = 64 Solidity + 87 frontend (measured 2026-09-03)
 # +2 fork tests (local anvil, excluded from CI)
 # coverage:                 100% lines / 95.8% statements / 100% functions (ReceiptRegistry.sol)
 # CI:                       green (contracts + frontend jobs)
@@ -20,6 +20,15 @@ ReceiptRegistry:
   sourceVerified: true
   explorer: https://sepolia.basescan.org/address/0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
   features: ask-to-answer binding; cancelStuckJob; withdraw strays only
+
+# ===== DocketGate (live consumer demo — act on a receipt) =====
+DocketGate:
+  address: 0xEaA18eE192D59d4D20Ff40907465a3cF9eD6a4ce
+  owner: 0xa1B0fCB092A1Df8cF7459F8dd71C220A6cD49a00
+  requiredIntent: CRYPTO_PRICE (0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a)
+  explorer: https://sepolia.basescan.org/address/0xEaA18eE192D59d4D20Ff40907465a3cF9eD6a4ce
+  liveActionTx: 0xebcaeba17b0e73a46da93375b859aa09f328b894066006a5f01e8c5da0c269ad
+  liveAction: "executeGated(28, 0x23d1c6ef...) — ActionGated fired; second call reverted ActionAlreadyExecuted (single-use proven live, 2026-09-03)"
 
 # ===== SUPERSEDED DEPLOYMENT (v1) - receipts still valid and immutable =====
 ReceiptRegistry_v1:

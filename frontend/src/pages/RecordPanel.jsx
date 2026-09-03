@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { REGISTRY, requestVerification, fetchLatestJobId } from '../lib/chain';
 import { classifyError, errorLabel } from '../lib/errors';
 import { receiptPermalink, explorerTx } from '../lib/evidence';
+import { savePendingJob, loadPendingJobs, removePendingJob } from '../lib/pendingJobs';
 
 // Record — the dashboard's create panel: ask a question, pick an intent,
 // escrow 1 USDC, and watch the job travel through the protocol. The timeline
@@ -33,6 +34,34 @@ export default function RecordPanel({ wallet, go }) {
   const [phase, setPhase] = useState('idle'); // idle | approving | miner | waiting | done | error
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [persisted, setPersisted] = useState([]); // jobs saved across sessions
+  const [checking, setChecking] = useState(false);
+
+  // on mount (or wallet change): refresh status of any jobs persisted for this wallet
+  useEffect(() => {
+    if (!wallet.account) { setPersisted([]); return; }
+    let live = true;
+    setChecking(true);
+    (async () => {
+      const mine = loadPendingJobs().filter((j) => j.owner === wallet.account);
+      // re-check each against the chain (they may have resolved while away)
+      const { fetchReceipt } = await import('../lib/chain');
+      const out = [];
+      for (const j of mine) {
+        let resolved = false;
+        if (j.jobId) {
+          try {
+            const rec = await fetchReceipt(Number(j.jobId));
+            resolved = !!rec.resolved;
+            if (resolved) removePendingJob(j.owner, j.txHash); // done — drop from pending
+          } catch { /* still pending or unknown */ }
+        }
+        if (!resolved) out.push(j);
+      }
+      if (live) { setPersisted(out); setChecking(false); }
+    })().catch(() => { if (live) setChecking(false); });
+    return () => { live = false; };
+  }, [wallet.account]);
 
   const pollReceipt = useCallback(async (jobId) => {
     const { fetchReceipt } = await import('../lib/chain');
@@ -43,6 +72,11 @@ export default function RecordPanel({ wallet, go }) {
         if (rec.resolved) {
           setPhase('done');
           setResult((p) => ({ ...p, resolved: true, receipt: rec }));
+          // resolved — no longer pending; drop from the persisted set + storage
+          setPersisted((p) => {
+            p.forEach((j) => { if (j.jobId === jobId) removePendingJob(j.owner, j.txHash); });
+            return p.filter((j) => j.jobId !== jobId);
+          });
           return;
         }
       } catch { /* keep polling */ }
@@ -67,8 +101,14 @@ export default function RecordPanel({ wallet, go }) {
         await publicClient.waitForTransactionReceipt({ hash: txHash });
         jobId = Number(await fetchLatestJobId(wallet.account));
       } catch { /* job id may surface later — status line still shows the tx */ }
-      setResult({ question: question.trim(), intent, approveHash, txHash, jobId, resolved: false });
+      setResult({ question: question.trim(), intent, approveHash, txHash, jobId, resolved: false, owner: wallet.account });
       setPhase('waiting');
+      // persist now so a closed browser doesn't lose the job (chain data stays findable)
+      if (wallet.account) {
+        const pend = { owner: wallet.account, question: question.trim(), intent, txHash, approveHash, jobId: jobId ?? null, submittedAt: Math.floor(Date.now() / 1000) };
+        savePendingJob(pend);
+        setPersisted((p) => [pend, ...p.filter((j) => j.txHash !== txHash)]);
+      }
       if (jobId) pollReceipt(jobId);
     } catch (e) {
       setPhase('error');
@@ -164,6 +204,51 @@ export default function RecordPanel({ wallet, go }) {
           </div>
         )}
       </div>
+
+      {/* persisted pending jobs — survived a browser close */}
+      {wallet.account && persisted.length > 0 && (
+        <div style={{ marginTop: 14, border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
+            <span className="label" style={{ fontSize: 9, letterSpacing: '0.18em' }}>YOUR JOBS IN FLIGHT (SAVED ACROSS SESSIONS)</span>
+            <span className="label" style={{ fontSize: 8, color: 'var(--faint)' }}>{checking ? 're-checking the chain…' : `${persisted.length} pending`}</span>
+          </div>
+          {persisted.map((j) => (
+            <div key={j.txHash} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
+              <span className="tnum" style={{ fontSize: 12, color: 'var(--ink)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>#{j.jobId ?? '—'}</span>
+              <span style={{ flex: '1 1 140px', minWidth: 0, fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.question}</span>
+              <span className="label" style={{ fontSize: 9, color: 'var(--signal)', flexShrink: 0 }}>AWAITING RESOLUTION</span>
+              {j.txHash && (
+                <a href={explorerTx(j.txHash)} target="_blank" rel="noreferrer" className="label" style={{ fontSize: 9, color: 'var(--faint)', textDecoration: 'underline', textUnderlineOffset: 2, flexShrink: 0 }}>
+                  tx {j.txHash.slice(0, 6)}…{j.txHash.slice(-4)} ↗
+                </a>
+              )}
+              {j.jobId && (
+                <button
+                  className="label"
+                  onClick={async () => {
+                    const { fetchReceipt } = await import('../lib/chain');
+                    try {
+                      const rec = await fetchReceipt(Number(j.jobId));
+                      if (rec.resolved) {
+                        removePendingJob(j.owner, j.txHash);
+                        setPersisted((p) => p.filter((x) => x.txHash !== j.txHash));
+                        setResult({ question: j.question, intent: j.intent, txHash: j.txHash, jobId: j.jobId, resolved: true, receipt: rec, owner: j.owner });
+                        setPhase('done');
+                      } else {
+                        setPersisted((p) => p.map((x) => x.txHash === j.txHash ? { ...x, lastChecked: Date.now() } : x));
+                        pollReceipt(Number(j.jobId));
+                      }
+                    } catch { /* still no receipt */ }
+                  }}
+                  style={{ fontSize: 9, color: 'var(--signal)', background: 'none', border: '1px solid color-mix(in oklch, var(--signal) 40%, var(--line))', borderRadius: 2, cursor: 'pointer', padding: '4px 8px', flexShrink: 0 }}
+                >
+                  check status
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* status strip */}
       {(phase === 'waiting' || phase === 'done') && result?.jobId && (

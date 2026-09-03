@@ -2,6 +2,11 @@ import { useState } from 'react';
 
 const REGISTRY = '0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48';
 const REGISTRY_URL = `https://sepolia.basescan.org/address/${REGISTRY}`;
+// LIVE consumer demo — a real deployed gate that verified receipt #28 on-chain.
+const GATE = '0xEaA18eE192D59d4D20Ff40907465a3cF9eD6a4ce';
+const GATE_URL = `https://sepolia.basescan.org/address/${GATE}`;
+const GATE_TX = '0xebcaeba17b0e73a46da93375b859aa09f328b894066006a5f01e8c5da0c269ad';
+const GATE_TX_URL = `https://sepolia.basescan.org/tx/${GATE_TX}`;
 
 const FLOW = [
   ['1', 'A Telegraph job resolves', 'the network returns a response; the escrow pays the resolver through the Diamond'],
@@ -82,6 +87,31 @@ export default function DocketGatePage() {
         </div>
       </div>
 
+      {/* LIVE — this actually ran on Base Sepolia */}
+      <div className="panel" style={{ marginTop: 16, padding: '14px 20px', borderColor: 'color-mix(in oklch, var(--gain) 55%, var(--line))' }}>
+        <div className="label" style={{ color: 'var(--gain)', fontSize: 9, letterSpacing: '0.18em', marginBottom: 8 }}>
+          ● LIVE — A DEPLOYED GATE ALREADY ACTED ON A REAL RECEIPT
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+          {[
+            ['gate', GATE.slice(0, 6) + '…' + GATE.slice(-4), GATE_URL],
+            ['checked receipt', '#28 (CRYPTO_PRICE, resolved + locked)', null],
+            ['action tx', GATE_TX.slice(0, 6) + '…' + GATE_TX.slice(-4), GATE_TX_URL],
+          ].map(([k, v, href]) => (
+            <div key={k}>
+              <div className="label" style={{ fontSize: 8, color: 'var(--faint)' }}>{k.toUpperCase()}</div>
+              <div style={{ fontSize: 11.5, fontFamily: 'var(--font-mono)', color: 'var(--ink)', marginTop: 3 }}>
+                {href ? <a href={href} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}>{v} ↗</a> : v}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="label" style={{ fontSize: 9, color: 'var(--faint)', lineHeight: 1.7, textTransform: 'none', letterSpacing: '0.02em', marginTop: 8 }}>
+          `executeGated(28, 0x23d1c6ef…)` ran on-chain — the gate read receipt #28 from the registry, every check passed, and the
+          action fired (event `ActionGated`). A second call reverted with `ActionAlreadyExecuted`: a receipt unlocks an action exactly once.
+        </div>
+      </div>
+
       {/* the contract — real code */}
       <div className="term-feed-head" style={{ marginTop: 26 }}>
         <span>THE GATE — REAL SOLIDITY FROM THIS REPO</span>
@@ -116,8 +146,11 @@ export default function DocketGatePage() {
 
       <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
         <a className="act" href="#/dashboard/receipts" style={{ textDecoration: 'none', display: 'inline-block' }}>← Receipts</a>
-        <a className="act-solid" href={REGISTRY_URL} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'inline-block' }}>
-          ReceiptRegistry on BaseScan ↗
+        <a className="act-solid" href={GATE_URL} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          Live gate on BaseScan ↗
+        </a>
+        <a className="act" href={REGISTRY_URL} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          ReceiptRegistry ↗
         </a>
       </div>
     </div>
