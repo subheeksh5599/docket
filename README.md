@@ -31,20 +31,18 @@ AI answers now drive real decisions — a price check, a contract review, a safe
 
 **DOCKET is that evidence, as a hard on-chain artifact.** You ask a question. Your receipt contract escrows testnet USDC into the Telegraph Diamond — the protocol's own payment rail — and issues an ERC-8183 `createJob`. The protocol routes the job and a network resolver answers; when it resolves, the **same callback that pays the resolver** writes the receipt into your contract: question hash, answer commitment, intent, timestamp. One write. Then locked — there is no update path, no delete button, no database to hack.
 
-```
-You ask ──► ReceiptRegistry escrows USDC ──► createJob (ERC-8183) on the Telegraph Diamond
-                                                 │
-                                                 ▼
-                                  protocol routes the job; a network resolver answers
-                                                 │
-                                                 ▼
-                                  resolver answers ──► on-chain resolve
-                                                 │
-                                                 ▼
-                       callback writes the immutable receipt (locked forever)
-                                                 │
-                                                 ▼
-               anyone verifies: questionHash · answerHash · miner · timestamp
+```mermaid
+flowchart LR
+    A[You ask] --> B[ReceiptRegistry escrows USDC]
+    B --> C[createJob · ERC-8183 on the Telegraph Diamond]
+    C --> D[protocol routes the job → a network resolver answers]
+    D --> E[on-chain resolve]
+    E --> F[callback writes the immutable receipt · locked forever]
+    F --> G[anyone verifies · questionHash · answerHash · timestamp]
+    classDef step fill:#ffffff,stroke:#1d1f24,color:#1d1f24;
+    classDef final fill:#c6d452,stroke:#1d1f24,color:#1d1f24;
+    class A,B,C,D,E,F step;
+    class G final;
 ```
 
 The invariant, printed on every page of the app: **DOCKET records what the network returned. It never declares what is true.** The receipt is an anchor, not an opinion — anyone can re-hash the original payload and confirm the commitment forever, with no trusted party.
@@ -55,7 +53,6 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
 
 - [The 20-second pitch](#the-20-second-pitch)
 - [See it in one command](#-see-it-in-one-command)
-- [Screenshots](#screenshots)
 - [The problem DOCKET solves](#the-problem-docket-solves)
 - [Why a screenshot isn't evidence](#why-a-screenshot-isnt-evidence)
 - [How DOCKET works](#how-docket-works)
@@ -139,30 +136,6 @@ RESULT: RECEIPT VERIFIED - immutable on-chain receipt exists for job 24
 ```
 
 That is the product in one command: an immutable on-chain record, resolved through the real protocol and independently verifiable with zero DOCKET infrastructure.
-
----
-
-## Screenshots
-
-Real pages from the live deployment (1440×900):
-
-![Landing — interactive dither hero, typewriter headline, live receipt proof](assets/shot-landing.png)
-
-The landing: interactive WebGL dither hero, typewriter headline with hover-swap sponsor words (Telegraph / Base Sepolia / ERC-8183), and a live receipt read fresh from the chain.
-
-![Record — the create panel with the staged protocol timeline](assets/shot-record.png)
-
-The record panel: ask a question, pick an intent, escrow 1 USDC — then watch the job travel (JOB CREATED → MINER → SUBMITTED → SETTLED → RECEIPT MINTED) as the app polls the chain.
-
-![Receipt — provenance + integrity with independent re-hash](assets/shot-receipt.png)
-
-A receipt permalink: NETWORK RESPONSE framing (never "truth"), full provenance with explorer links, and the keccak commitment with a paste-to-verify panel that needs no trust in DOCKET.
-
-![Receipts — the Etherscan-style index](assets/shot-receipts.png)
-
-The receipts index: search, All/Pending/Resolved/My-receipts filters, every receipt ever minted read live from the chain.
-
-> Screenshots captured from [docket-blush.vercel.app](https://docket-blush.vercel.app). The receipts shown are real on-chain records — no mock data, no doctored state.
 
 ---
 
@@ -267,33 +240,33 @@ No DOCKET server, no DOCKET database, no DOCKET key is involved in any of these.
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    U["USER (wallet)<br/>question · intent · 1 USDC"] -->|"approve USDC + requestVerification"| R
+
+    subgraph REG["ReceiptRegistry — the record (source-verified)"]
+        R["requestVerification()<br/>① revert on empty question / zero budget<br/>② commit questionHash + intentId first<br/>③ pull USDC → escrow on the Diamond<br/>④ createJob(intent, params, callback=registry)"]
+        CB["subnetMessage (protocol callback)<br/>① require msg.sender == Diamond<br/>② mint receipt from committed ask + answer<br/>③ lock it — no update path exists"]
+    end
+
+    R -->|"createJob — ERC-8183"| D
+    D["Telegraph Diamond (the protocol)<br/>routes the job → a network resolver answers<br/>settlement pays the resolver from escrow"]
+    D -->|"subnetMessage callback (same tx that pays)"| CB
+    CB -->|"one write, then locked"| RC["RECEIPT — minted + locked<br/>jobId · intentId · questionHash · answerHash · timestamp"]
+
+    R -.->|"cancelStuckJob: escrow refund if unresolved"| D
+
+    classDef user fill:#1d1f24,color:#faf9f5,stroke:#1d1f24;
+    classDef reg fill:#ffffff,stroke:#1d1f24,color:#1d1f24;
+    classDef proto fill:#ffffff,stroke:#3f6e2f,color:#1d1f24;
+    classDef rec fill:#c6d452,stroke:#1d1f24,color:#1d1f24;
+    class U user;
+    class R,CB reg;
+    class D proto;
+    class RC rec;
 ```
-┌─ User (wallet) ───────────────────────────────────────────────┐
-│  question · intent · budget (testnet USDC)                    │
-└──────────────┬───────────────────────────────────────────────┘
-               ▼
-┌─ ReceiptRegistry (the record, source-verified) ──────────────┐
-│  requestVerification:                                        │
-│    1. revert on empty question / zero budget                 │
-│    2. commit questionHash + intentId to storage              │
-│    3. pull USDC, approve Diamond, depositUSDC (escrow)       │
-│    4. diamond.createJob(intent, params, callback=registry)   │
-│                                                              │
-│  subnetMessage (protocol callback):                          │
-│    1. require msg.sender == Diamond                          │
-│    2. mint receipt from pre-committed ask + callback answer  │
-│    3. lock it. no update path exists.                        │
-│                                                              │
-│  cancelStuckJob: escrow refund for unresolved jobs           │
-│  withdraw: owner collects stray tokens only (never receipts) │
-└──────────────┬───────────────────────────────────────────────┘
-               │ createJob (ERC-8183)
-               ▼
-┌─ Telegraph Diamond (the protocol) ───────────────────────────┐
-│  routes the job; a network resolver answers                  │
-│  resolver answers ──► settlement ──► callback → registry      │
-└──────────────────────────────────────────────────────────────┘
-```
+
+The full loop: the user signs two transactions, the registry commits the ask and escrows USDC into the Diamond, the protocol routes the job to a network resolver, and the **same transaction that pays the resolver** fires the callback that mints and locks the receipt. If the job never resolves, `cancelStuckJob` refunds the escrow — nothing is silently lost.
 
 ### The record, component by component
 
