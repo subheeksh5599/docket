@@ -105,14 +105,17 @@ docs/                    deployment facts, threat model, runbook, manifest
 
 ## Status
 
-- [x] Contracts + 20 tests green (unit + adversarial + fork against real Diamond)
+- [x] Contracts + tests green: 57 Solidity tests (core, adversarial, edge cases, hash vectors, stateful invariants) + 86 frontend tests = 143 total (>100 bar met)
+- [x] ReceiptRegistry.sol at 100% line / 95.8% statement / 100% function coverage (forge coverage)
 - [x] Live Diamond + USDC + job price verified on-chain
-- [x] Live end-to-end on Base Sepolia: real ERC-8183 job #24 → real miner → real callback → immutable receipt (ask→answer bound)
+- [x] Live end-to-end on Base Sepolia: real ERC-8183 job #24 → real miner → real callback → immutable receipt (ask→answer bound: questionHash + intentId + answerHash committed)
 - [x] Receipt verified from 3 independent RPCs + CLI verifier (all checks PASS)
 - [x] Contract source-verified on Blockscout (active + v1 deployments)
-- [x] Frontend: ask flow, receipt board, verify-from-chain, error taxonomy (builds clean, points at live registry)
-- [x] CLI verifier, docs (deployment facts / threat model / runbook / manifest), env hygiene
-- [ ] Full-answer re-hash from callback calldata (documented next enhancement — receipt commitment is already the immutable anchor)
+- [x] Frontend: ask flow, receipt board, verify-from-chain, error taxonomy, permalink routes (#/receipt/:id), ReceiptView, trust page, evidence JSON export (builds clean, points at live registry)
+- [x] CLI verifier with answer re-hash mode (canonical OnChainData ABI encoder, viem-verified)
+- [x] CI: GitHub Actions — forge fmt/build/test + invariant suite; frontend lint/test/build
+- [x] Security: CSP + security headers + OpenGraph + referrer policy
+- [x] Docs: deployment facts / threat model / runbook / manifest (live values), env examples pointed at the live registry
 
 Local dev: `forge test` (contracts) · `cd frontend && npm run dev` (UI) ·
 `anvil --fork-url https://sepolia.base.org --port 8545` then `forge test --match-path test/Fork.t.sol`.

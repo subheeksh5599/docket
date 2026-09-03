@@ -41,6 +41,22 @@ paid, and the receipt may not be written.
 - If a write ever lands elsewhere, it is on the user's own wallet + the wrong chain's
   Diamond — DOCKET holds no keys and cannot move funds. Document and verify chain id.
 
+## Health / observability (self-serve)
+No backend exists to monitor — the chain IS the source of truth. Point any watcher at:
+- `eth_chainId` + latest block on the RPC failover list (base-sepolia public endpoints).
+- `getJobBasePrice()` on the Diamond returns non-zero → protocol facet alive.
+- `eth_getCode(REGISTRY)` non-empty → registry deployed; `getReceipt(jobId)` reads.
+- A cron can page on: job #N stuck in state 0 past its expected TTL, or the registry
+  address returning no code (chain reset). All reads are public RPC calls — no keys.
+- Frontend surfaces failures with the error taxonomy (docs/THREAT_MODEL.md) and a retry;
+  wallet rejections show "nothing was charged" — no silent states.
+
+## Stuck-job recovery (user-facing)
+- AskPanel submits; if the job stays PENDING past the intent TTL the user can cancel from
+  the receipts view (cancelStuckJob → escrow refunds to the Diamond escrow under the
+  registry; owner withdraws strays only). UI shows the honest state: PENDING pulse while
+  the network resolves, MINTED when the callback lands, no fake success between.
+
 ## Everything else
 - Structured logs + request ids in the backend (if added). Frontend JS error tracking.
 - After any incident: append to this file with date, cause, fix, prevention.
