@@ -32,27 +32,32 @@ export default function App() {
 
   const go = (r) => { window.location.hash = r; };
 
+  const linkCls = (active) =>
+    `text-[12px] uppercase tracking-[0.14em] font-mono transition-colors duration-150 ${
+      active ? 'text-ink font-semibold' : 'text-faint hover:text-ink'
+    }`;
+
   return (
-    <div className="min-h-screen bg-obsidian-shell text-pure-white">
+    <div className="min-h-screen bg-paper text-ink">
       {/* Nav */}
-      <header className="border-b hairline">
+      <header className="border-b border-line bg-paper/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-[1200px] mx-auto px-8 h-16 flex items-center justify-between">
           <button className="flex items-center gap-3" onClick={() => go('')}>
-            <span className="w-2 h-2 rounded-full bg-neon-pulse pulse-dot" />
-            <span className="font-aeonikfono text-[15px] tracking-wide text-pure-white">DOCKET</span>
+            <span className="w-2 h-2 rounded-full bg-signal pulse-dot" />
+            <span className="font-mono font-semibold text-[15px] tracking-[0.12em] text-ink">DOCKET</span>
           </button>
-          <nav className="hidden md:flex items-center gap-8 text-[15px] text-pure-white/80">
-            <button onClick={() => go('')} className={route.route==='ask' ? 'text-neon-pulse' : 'hover:text-pure-white'}>Ask</button>
-            <button onClick={() => go('receipts')} className={route.route==='receipts' || route.route==='receipt' ? 'text-neon-pulse' : 'hover:text-pure-white'}>Receipts</button>
-            <button onClick={() => go('trust')} className={route.route==='trust' ? 'text-neon-pulse' : 'hover:text-pure-white'}>Why trust this</button>
+          <nav className="hidden md:flex items-center gap-8">
+            <button onClick={() => go('')} className={linkCls(route.route==='ask')}>Ask</button>
+            <button onClick={() => go('receipts')} className={linkCls(route.route==='receipts' || route.route==='receipt')}>Receipts</button>
+            <button onClick={() => go('trust')} className={linkCls(route.route==='trust')}>Why trust this</button>
           </nav>
           <div>
             {wallet.account ? (
-              <button className="btn-pill-ghost !py-2 !px-5 text-sm" onClick={wallet.disconnect}>
+              <button className="btn-pill-ghost !py-2 !px-5 text-xs" onClick={wallet.disconnect}>
                 {wallet.account.slice(0,6)}…{wallet.account.slice(-4)}
               </button>
             ) : (
-              <button className="btn-pill-primary !py-2 !px-5 text-sm" onClick={wallet.connect} disabled={wallet.status==='connecting'}>
+              <button className="btn-pill-primary !py-2 !px-5 text-xs" onClick={wallet.connect} disabled={wallet.status==='connecting'}>
                 {wallet.status==='connecting' ? 'Connecting…' : 'Connect Wallet'}
               </button>
             )}
@@ -70,22 +75,22 @@ export default function App() {
       ) : (
         <>
           {/* Hero (home + receipts share it) */}
-          <section className="max-w-[1200px] mx-auto px-8 pt-20 pb-16">
-            <p className="eyebrow text-neon-pulse mb-4">PUT A QUESTION ON THE RECORD</p>
-            <h1 className="font-aeonikfono font-medium text-5xl md:text-6xl leading-[1.1] text-pure-white max-w-3xl">
-              Ask the network. Mint the receipt.
+          <section className="max-w-[1200px] mx-auto px-8 pt-20 pb-14">
+            <p className="eyebrow mb-4 text-faint">PUT A QUESTION ON THE RECORD</p>
+            <h1 className="font-display font-bold text-5xl md:text-6xl leading-[1.05] text-ink max-w-3xl">
+              Ask the network.<br />Mint the receipt.
             </h1>
-            <p className="mt-6 text-pure-white/70 text-lg max-w-2xl leading-relaxed">
+            <p className="mt-6 text-muted text-[15px] max-w-2xl leading-relaxed">
               DOCKET sends your question to Telegraph's top-ranked miners through a real
               on-chain job. The verified answer — the miner, the hash, the block — is written
               on-chain, forever. No screenshots. No files. The protocol itself mints the record.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap gap-3">
               <button onClick={() => go('')} className="btn-pill-primary">Ask a question</button>
               <button onClick={() => go('receipts')} className="btn-pill-ghost">View receipts</button>
             </div>
             {!REGISTRY && (
-              <div className="mt-6 inline-flex items-center gap-2 card-dark px-5 py-3 text-sm text-signal-yellow">
+              <div className="mt-6 inline-flex items-center gap-2 card-dark px-5 py-3 text-sm text-loss">
                 ⚠ Registry not yet deployed — the ask flow activates once VITE_REGISTRY_ADDRESS is set.
               </div>
             )}
@@ -98,13 +103,13 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="border-t hairline">
+      <footer className="border-t border-line">
         <div className="max-w-[1200px] mx-auto px-8 py-8 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-neon-pulse pulse-dot" />
-            <span className="eyebrow text-pure-white/50">DOCKET — RECORDS WHAT THE NETWORK RETURNED. NEVER DECLARES TRUTH.</span>
+            <span className="w-2 h-2 rounded-full bg-signal pulse-dot" />
+            <span className="eyebrow text-faint">DOCKET — RECORDS WHAT THE NETWORK RETURNED. NEVER DECLARES TRUTH.</span>
           </div>
-          <span className="eyebrow text-pure-white/50">BASE SEPOLIA · TELEGRAPH ERC-8183</span>
+          <span className="eyebrow text-faint">BASE SEPOLIA · TELEGRAPH ERC-8183</span>
         </div>
       </footer>
     </div>

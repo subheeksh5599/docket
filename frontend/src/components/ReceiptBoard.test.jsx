@@ -47,7 +47,7 @@ describe('ReceiptBoard', () => {
     });
     render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/job #42/i)).toBeTruthy();
-    expect(screen.getByText('MINTED')).toBeTruthy();
+    expect(screen.getByText('Minted')).toBeTruthy();
     expect(screen.getByText(/commitment:/i)).toBeTruthy();
   });
 
@@ -60,7 +60,7 @@ describe('ReceiptBoard', () => {
     });
     render(<ReceiptBoard wallet={{ account: '0xabc' }} />);
     expect(await screen.findByText(/job #7/i)).toBeTruthy();
-    expect(screen.getByText('PENDING')).toBeTruthy();
+    expect(screen.getByText('Pending')).toBeTruthy();
     expect(screen.getByText(/waiting for the network/i)).toBeTruthy();
   });
 

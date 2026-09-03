@@ -21,3 +21,4 @@ lib/forge-std/
 # misc
 .DS_Store
 *.log
+__pycache__/

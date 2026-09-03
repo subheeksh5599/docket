@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { publicClient, fetchUserJobCount, fetchReceipt, REGISTRY, registryAbi } from '../lib/chain';
-import { canonicalAnswerHash } from '../lib/hash';
 import { receiptPermalink, explorerTx } from '../lib/evidence';
 
 export default function ReceiptBoard({ wallet }) {
@@ -41,14 +40,14 @@ export default function ReceiptBoard({ wallet }) {
   if (!wallet.account) {
     return (
       <div className="card-dark p-8 text-center">
-        <p className="text-pure-white/60">Connect your wallet to view your receipts.</p>
+        <p className="text-muted">Connect your wallet to view your receipts.</p>
       </div>
     );
   }
   if (!REGISTRY) {
     return (
       <div className="card-dark p-8 text-center">
-        <p className="text-signal-yellow text-sm">Receipts appear here once the registry is deployed (VITE_REGISTRY_ADDRESS).</p>
+        <p className="text-loss text-sm">Receipts appear here once the registry is deployed (VITE_REGISTRY_ADDRESS).</p>
       </div>
     );
   }
@@ -57,25 +56,25 @@ export default function ReceiptBoard({ wallet }) {
     <div>
       <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
         <div>
-          <p className="eyebrow text-neon-pulse mb-1">THE RECORD</p>
-          <h2 className="font-aeonikfono text-3xl text-pure-white">Your receipts</h2>
+          <p className="eyebrow text-faint mb-1">THE RECORD</p>
+          <h2 className="font-display text-3xl font-bold text-ink">Your receipts</h2>
         </div>
         <div className="text-right">
-          <div className="font-aeonikfono text-5xl font-medium text-neon-pulse leading-none">{count}</div>
-          <div className="eyebrow text-pure-white/50 mt-1">RECEIPTS MINTED</div>
+          <div className="font-mono text-5xl font-semibold text-gain leading-none tabular-nums">{count}</div>
+          <div className="eyebrow text-faint mt-1">RECEIPTS MINTED</div>
         </div>
       </div>
 
-      {loading && <p className="text-pure-white/50 py-8">Reading the chain…</p>}
-      {error && <p className="text-red-300 text-sm py-4">{error}</p>}
+      {loading && <p className="text-muted py-8">Reading the chain…</p>}
+      {error && <p className="text-loss text-sm py-4">{error}</p>}
       {!loading && !error && receipts.length === 0 && (
         <div className="card-dark p-10 text-center">
-          <span className="w-2 h-2 rounded-full bg-pure-white/20 inline-block mb-3" />
-          <p className="text-pure-white/50">No receipts yet. Ask the network and the record starts here.</p>
+          <span className="w-2 h-2 rounded-full bg-line-strong inline-block mb-3" />
+          <p className="text-muted">No receipts yet. Ask the network and the record starts here.</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {receipts.map((r) => (
           <ReceiptCard key={r.idx} r={r} />
         ))}
@@ -92,9 +91,6 @@ function ReceiptCard({ r }) {
     setVerifyState('checking');
     try {
       const receipt = await fetchReceipt(Number(r.jobId === '—' ? 0 : r.jobId));
-      // recompute the canonical hash of the response (needs the answer payload; for a
-      // stored receipt we verify: receipt exists, resolved, locked — the immutable
-      // commitment is the anchor; full answer re-hash needs callback calldata)
       const checks = {
         exists: !!receipt,
         resolved: !!receipt.resolved,
@@ -113,32 +109,32 @@ function ReceiptCard({ r }) {
   return (
     <div className="card-dark p-6">
       <div className="flex items-center justify-between mb-3">
-        <span className="eyebrow text-pure-white/50">RECEIPT</span>
+        <span className="eyebrow text-faint">RECEIPT</span>
         {r.resolved ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-neon-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-neon-pulse pulse-dot" /> MINTED
+          <span className="inline-flex items-center gap-1.5 text-xs text-gain font-mono uppercase tracking-[0.08em]">
+            <span className="w-1.5 h-1.5 rounded-full bg-signal pulse-dot" /> Minted
           </span>
         ) : (
-          <span className="text-xs text-pure-white/40">PENDING</span>
+          <span className="text-xs text-faint font-mono uppercase tracking-[0.08em]">Pending</span>
         )}
       </div>
-      <p className="font-mono text-xs text-pure-white/60 break-all mb-2">job #{r.jobId}</p>
+      <p className="font-mono text-xs text-muted break-all mb-2">job #{r.jobId}</p>
       {r.resolved ? (
         <>
-          <p className="font-mono text-xs text-pure-white/50 break-all mb-1">commitment: {String(r.answerHash || '').slice(0, 24)}…</p>
+          <p className="font-mono text-xs text-faint break-all mb-1">commitment: {String(r.answerHash || '').slice(0, 24)}…</p>
           <div className="flex items-center gap-3 flex-wrap">
-            <a className="text-neon-pulse text-xs underline" href={explorerTx(r.jobId === '—' ? null : r.jobId)} target="_blank" rel="noreferrer">explorer →</a>
-            <a className="text-pure-white/70 text-xs underline hover:text-neon-pulse" href={r.jobId !== '—' ? receiptPermalink(r.jobId) : undefined}>permalink →</a>
-            <button className="text-pure-white/70 text-xs underline hover:text-neon-pulse" onClick={runVerify} disabled={verifyState==='checking'}>
+            <a className="text-ink text-xs underline decoration-line-strong underline-offset-2 hover:decoration-ink" href={explorerTx(r.jobId === '—' ? null : r.jobId)} target="_blank" rel="noreferrer">explorer →</a>
+            <a className="text-muted text-xs underline decoration-line-strong underline-offset-2 hover:text-ink" href={r.jobId !== '—' ? receiptPermalink(r.jobId) : undefined}>permalink →</a>
+            <button className="text-muted text-xs underline decoration-line-strong underline-offset-2 hover:text-ink" onClick={runVerify} disabled={verifyState==='checking'}>
               {verifyState==='checking' ? 'verifying…' : 'verify from chain'}
             </button>
           </div>
           {verifyState==='done' && verifyResult && (
-            <div className={`mt-3 rounded-[10px] p-3 text-xs ${verifyResult.pass ? 'bg-neon-pulse/10 text-neon-pulse' : 'bg-red-400/10 text-red-300'}`}>
+            <div className={`mt-3 rounded-[3px] p-3 text-xs font-mono ${verifyResult.pass ? 'bg-gain/10 text-gain' : 'bg-loss/10 text-loss'}`}>
               {verifyResult.pass ? (
                 <>
-                  <span className="font-medium">VERIFIED NETWORK RETURN</span>
-                  <div className="text-pure-white/60 mt-1">
+                  <span className="font-semibold uppercase tracking-[0.08em]">Verified network return</span>
+                  <div className="text-muted mt-1">
                     receipt exists ✓ · resolved ✓ · immutable commitment present ✓
                   </div>
                 </>
@@ -148,13 +144,13 @@ function ReceiptCard({ r }) {
             </div>
           )}
           {verifyState==='error' && verifyResult && (
-            <div className="mt-3 rounded-[10px] bg-red-400/10 p-3 text-xs text-red-300">
+            <div className="mt-3 rounded-[3px] bg-loss/10 p-3 text-xs font-mono text-loss">
               verification error: {verifyResult.error}
             </div>
           )}
         </>
       ) : (
-        <p className="text-xs text-pure-white/40">Waiting for the network to resolve…</p>
+        <p className="text-xs text-faint">Waiting for the network to resolve…</p>
       )}
     </div>
   );

@@ -1,5 +1,9 @@
 <div align="center">
 
+<img src="assets/cover.png" alt="DOCKET — Put a question on the record. A real Telegraph miner answers; the receipt is minted on-chain, immutable, independently verifiable." width="100%" />
+
+&nbsp;
+
 # DOCKET
 
 ### Put a question on the record — the Telegraph network itself writes the answer on-chain, and the receipt can never be edited, deleted, or faked.

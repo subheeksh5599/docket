@@ -38,20 +38,20 @@ export default function ReceiptView({ jobId }) {
   useEffect(() => { load(); }, [load]);
 
   if (state === 'loading') {
-    return <div className="card-dark p-10 text-center text-pure-white/50">Verifying receipt #{jobId} from the chain…</div>;
+    return <div className="card-dark p-10 text-center text-muted">Verifying receipt #{jobId} from the chain…</div>;
   }
   if (state === 'missing') {
     return (
       <div className="card-dark p-10 text-center">
-        <p className="text-signal-yellow">No receipt exists for job #{jobId} on this registry.</p>
-        <p className="text-pure-white/40 text-sm mt-2">Receipts are minted by the protocol callback after a miner resolves the job.</p>
+        <p className="text-loss">No receipt exists for job #{jobId} on this registry.</p>
+        <p className="text-faint text-sm mt-2">Receipts are minted by the protocol callback after a miner resolves the job.</p>
       </div>
     );
   }
   if (state === 'error') {
     return (
       <div className="card-dark p-10 text-center">
-        <p className="text-red-300">Could not read the chain for job #{jobId}.</p>
+        <p className="text-loss">Could not read the chain for job #{jobId}.</p>
         <button className="btn-pill-primary mt-4" onClick={load}>Retry</button>
       </div>
     );
@@ -64,16 +64,16 @@ export default function ReceiptView({ jobId }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="eyebrow text-neon-pulse mb-1">ON THE RECORD</p>
-          <h2 className="font-aeonikfono text-3xl text-pure-white">Receipt #{receipt.jobId?.toString?.() ?? jobId}</h2>
+          <p className="eyebrow text-faint mb-1">ON THE RECORD</p>
+          <h2 className="font-display text-3xl font-bold text-ink">Receipt #{receipt.jobId?.toString?.() ?? jobId}</h2>
         </div>
         {pass ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-neon-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-neon-pulse pulse-dot" /> VERIFIED ON-CHAIN
+          <span className="inline-flex items-center gap-1.5 text-xs text-gain font-mono uppercase tracking-[0.08em]">
+            <span className="w-1.5 h-1.5 rounded-full bg-signal pulse-dot" /> Verified on-chain
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-xs text-signal-yellow">
-            <span className="w-1.5 h-1.5 rounded-full bg-signal-yellow pulse-dot" /> {state === 'pending' ? 'PENDING RESOLUTION' : 'NOT VERIFIED'}
+          <span className="inline-flex items-center gap-1.5 text-xs text-loss font-mono uppercase tracking-[0.08em]">
+            <span className="w-1.5 h-1.5 rounded-full bg-loss pulse-dot" /> {state === 'pending' ? 'Pending resolution' : 'Not verified'}
           </span>
         )}
       </div>
@@ -88,9 +88,9 @@ export default function ReceiptView({ jobId }) {
       </div>
 
       {pass && summary && (
-        <div className="card-dark border border-neon-pulse/30 p-5">
-          <p className="eyebrow text-neon-pulse mb-2">INDEPENDENT VERIFICATION</p>
-          <ul className="text-sm text-pure-white/70 space-y-1">
+        <div className="card-dark border border-gain/40 p-5">
+          <p className="eyebrow text-gain mb-2">INDEPENDENT VERIFICATION</p>
+          <ul className="text-sm text-muted space-y-1 font-mono">
             {summary.map((s) => <li key={s}>✓ {s}</li>)}
           </ul>
         </div>
@@ -98,7 +98,7 @@ export default function ReceiptView({ jobId }) {
 
       <div className="flex flex-wrap gap-3">
         <button className="btn-pill-primary" onClick={() => downloadEvidenceBundle(evidence, receipt.jobId?.toString?.() ?? jobId)}>
-          Export evidence bundle (json + txt + sha256)
+          Export evidence bundle
         </button>
         <button
           className="btn-pill-secondary"
@@ -114,11 +114,11 @@ export default function ReceiptView({ jobId }) {
 function Row({ k, v, href, mono }) {
   return (
     <div className="flex flex-col md:flex-row md:gap-4">
-      <span className="text-[#132322]/50 md:w-40 shrink-0 uppercase tracking-wider text-[10px] md:pt-0.5">{k}</span>
+      <span className="text-faint md:w-40 shrink-0 uppercase tracking-wider text-[10px] md:pt-0.5">{k}</span>
       {href ? (
-        <a className="text-neon-pulse underline" href={href} target="_blank" rel="noreferrer">{v}</a>
+        <a className="text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink" href={href} target="_blank" rel="noreferrer">{v}</a>
       ) : (
-        <span className="text-[#132322]/90">{v}</span>
+        <span className="text-ink/90">{v}</span>
       )}
     </div>
   );
