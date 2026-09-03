@@ -62,7 +62,6 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
   - [4 · The callback mints the receipt — one write](#4--the-callback-mints-the-receipt--one-write)
   - [5 · Locked. No update function exists.](#5--locked-no-update-function-exists)
 - [The live receipt](#the-live-receipt)
-- [Live on-chain graphs](#live-on-chain-graphs)
 - [Verify it yourself](#verify-it-yourself)
 - [Architecture](#architecture)
   - [The record, component by component](#the-record-component-by-component)
@@ -206,26 +205,6 @@ A real job on the real testnet, resolved on-chain through the Telegraph network,
 | questionHash | `0x5f8aa309e059516aaff6d218737f5740c073d7d8bbca87dd646930296e96e7b1` |
 | answerHash | `0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2` |
 | Status | resolved · **locked** · verified PASS |
-
-## Live on-chain graphs
-
-Every point below is a real `ReceiptMinted` event read from the registry on Base Sepolia (job ids #24 · #28 · #30 · #31 · #32). No fabricated data — this is the complete on-chain history since deployment.
-
-![Receipts minted — cumulative, all time](assets/graph-receipts-cumulative.svg)
-
-The full mint history: every receipt, in order, as the protocol's callback wrote it on-chain. Two receipts minted in the same minute (#30, #31) are spread slightly on the x-axis so both markers are visible.
-
-![Total protocol value moved](assets/graph-escrow-total.svg)
-
-Each job escrows exactly the job base price (1 USDC on testnet) into the Telegraph Diamond. The full escrow total is the real money that moved through the pipeline.
-
-![Receipts by intent](assets/graph-intents.svg)
-
-Live receipts by intent — three distinct intents actually exercised on-chain: CRYPTO_PRICE, GAS_PRICE and WEATHER_CHECK.
-
-Regenerate anytime with the live data: `scripts/gen_graphs.py` (reads `ReceiptMinted` logs via RPC and rewrites the SVGs).
-
----
 
 ## Verify it yourself
 
