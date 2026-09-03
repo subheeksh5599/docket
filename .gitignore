@@ -1,0 +1,23 @@
+# secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.secret
+**/keystore*
+.secrets/
+
+# node
+node_modules/
+dist/
+.vite/
+
+# foundry
+cache/
+out/
+broadcast/
+lib/forge-std/
+
+# misc
+.DS_Store
+*.log
