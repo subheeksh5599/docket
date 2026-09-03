@@ -1,4 +1,4 @@
-# DOCKET — Deployment Manifest (LIVE — Base Sepolia, deployed 2026-09-02)
+# DOCKET - Deployment Manifest (LIVE - Base Sepolia, deployed 2026-09-02)
 
 network: base-sepolia
 chainId: 84532
@@ -7,43 +7,50 @@ chainId: 84532
 ReceiptRegistry:
   address: 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
   owner: 0xa1B0fCB092A1Df8cF7459F8dd71C220A6cD49a00
-  sourceVerified: true (Blockscout, 2026-09-02)
+  sourceVerified: true
   explorer: https://sepolia.basescan.org/address/0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
-  features: commits questionHash + intentId at request time; receipt binds ask to answer;
-            cancelStuckJob (refund stuck jobs); withdraw(to, amount)
+  features: ask-to-answer binding; cancelStuckJob; withdraw strays only
 
-# ===== SUPERSEDED DEPLOYMENT (v1, no ask binding) - receipts still valid and immutable =====
+# ===== SUPERSEDED DEPLOYMENT (v1) - receipts still valid and immutable =====
 ReceiptRegistry_v1:
   address: 0xFE240508CE86638E15ef85f187Cd649d7922646A
   explorer: https://sepolia.basescan.org/address/0xFE240508CE86638E15ef85f187Cd649d7922646A
 
-Telegraph (verified live 2026-09-02 - see docs/TELEGRAPH_DEPLOYMENT.md):
+Telegraph:
   diamond: 0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8
   usdc: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
   treasury: 0xffe89e1f0a77C600Ad938b57180E5be3e3119f40
   jobBasePrice: 1000000
 
-Golden receipt (live proof - ACTIVE deployment, ask-to-answer bound):
+Golden_receipt_24:
   jobId: 24
-  intent: CRYPTO_PRICE (0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a)
+  intent: 0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a
   question: "What is the current price of Bitcoin?"
   questionHash: 0x5f8aa309e059516aaff6d218737f5740c073d7d8bbca87dd646930296e96e7b1
-    (equals keccak256(abi.encode(question)) - VERIFIED MATCH)
   answerHash: 0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2
-  approve tx: 0x42bd9aa5995ceadabb8b4dba5851a5fad7dc631b789c154c35f69e2565096552
-  createJob tx: 0x839a971799a03aa6fede72bc503ca78dd70a1a84dadca83587f9a01198a2494e
-  createdAt: 1788355510
-  status: resolved + locked (immutable) - verified via 3 independent RPCs
+  createJobTx: 0x839a971799a03aa6fede72bc503ca78dd70a1a84dadca83587f9a01198a2494e
+  status: resolved + locked, verified via 3 RPCs
 
-Golden receipt v1 (original deployment - proof the ORIGINAL flow worked):
+Golden_receipt_23_v1:
   jobId: 23
   createTx: 0x60c7d5bdf6d45aaf940e3e86c8d9f052ff93f015aad0dc59a897d8c89b9ef7b2
   answerHash: 0x69d05c65260ff23f474f6f37018ce16c6708ddeceb913d4ee64f8500fe650b31
-  explorer: https://sepolia.basescan.org/tx/0x60c7d5bdf6d45aaf940e3e86c8d9f052ff93f015aad0dc59a897d8c89b9ef7b2
+
+Golden_receipt_28:
+  jobId: 28
+  wallet: 0x3750d9d7A049F1B14e4d3e9F8b6a1528c8149Ec4
+  intent: 0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a
+  question: "What is the price of Ethereum right now?"
+  questionHash: 0x4cbd14b1339419e00f51fb65a15598371de07cb57dc35539eb1f6ae9f71ebe0d
+  answerHash: 0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2
+  approveTx: 0x1b366d2948c01638ea607f7397af98f138b3b4f6a88162439ff0971ce546cc2d
+  createJobTx: 0x4e3d4fbe4ac966f6af4e739a504f04b1e46c2288760c7d6ff9be8af20450c28c
+  resolveTx: 0x405057ecf91b667f845bdb9280a12eb1b5709a0cf050d9dbbb062b7e96a5af3f
+  answerRehashPass: true
+  note: fresh-wallet E2E + live answer re-hash PASS (struct-tuple encoding)
 
 Intents:
   CRYPTO_PRICE: 0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a
-  # intentId = keccak256("NAME") - verify against getCanonicalIntents() before each new intent
 
 Compiler:
   solc: 0.8.28
@@ -52,5 +59,4 @@ Compiler:
   viaIR: true
 
 frontend:
-  version: v0.1.0-testnet
   registryEnv: VITE_REGISTRY_ADDRESS=0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48

@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/subheeksh5599/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/subheeksh5599/docket/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-![Tests](https://img.shields.io/badge/tests-141%20passing-2ecc71)
+[![Tests](https://img.shields.io/badge/tests-144%20passing-2ecc71)](#tests)
 ![Chain](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)
 ![Protocol](https://img.shields.io/badge/protocol-Telegraph%20ERC--8183-3ddc91)
 ![Stack](https://img.shields.io/badge/Solidity%20·%20Foundry%20·%20React%2019%20·%20viem-14151a)
@@ -309,15 +309,17 @@ Telegraph is load-bearing — not a logo on a page:
 | Capability | Status |
 |---|---|
 | Live end-to-end on Base Sepolia — real `createJob` (#24) → real miner → real callback → receipt minted + locked | **Real** — verified from sepolia.base.org, publicnode and drpc (identical reads) |
-| Receipt #24 immutability | **Real** — `locked == true`, no update function exists in the bytecode |
+| Live end-to-end with a FRESH wallet (#28) | **Real** — new wallet `0x3750d9d7…` funded + driven through approve → request → receipt in ~15s; verified from 2 independent RPCs |
+| Answer re-hash from callback calldata | **Real + LIVE PASS** — decoded the real resolving tx (`0x405057ec…` via `cast calldata-decode` + anvil trace) and recomputed the canonical hash → **matches the on-chain answerHash `0x23d1c6ef…` exactly** (this exposed and fixed a flat-vs-struct ABI encoding bug in the verifier) |
+| Live guard rails (eth_call reverts) | **Real** — unknown receipt `0xbb4902ed`, zero budget `0xff97b861`, empty question `0xe973bd0d` all revert correctly on the live registry |
+| Receipt immutability | **Real** — `locked == true`, no update function exists in the bytecode |
 | Ask → answer binding | **Real** — `questionHash` matches `keccak256(abi.encode(question))` cross-language (Solidity + JS + Python known-answer vectors) |
 | Contract source | **Real** — verified on Blockscout, matches this repo |
 | Job price + protocol addresses | **Real** — read live from the Diamond on-chain, pinned in `docs/TELEGRAPH_DEPLOYMENT.md` |
-| 141 tests (55 Solidity + 86 frontend) | **Real** — 53 unit/adversarial/edge/vector + 4 invariant + 2 fork (local anvil) + 86 vitest |
+| 144 tests passing in CI (53 Solidity + 4 invariant + 87 frontend; +2 fork tests locally) | **Real** — incl. the LIVE receipt #28 answer-hash vector in the JS suite |
 | Coverage of `ReceiptRegistry.sol` | **Real** — 100% lines / 95.8% statements / 100% functions (`forge coverage`) |
 | CI — both jobs green on every push | **Real** — contracts (fmt/build/test/invariant) + frontend (lint/test/build) |
 | Test mocks (`MockDiamond`, `MockUSDC`) | **TEST-ONLY** — under `test/`, never deployed, never in the shipped path |
-| Answer re-hash from callback calldata | **Real code** — verifier `--answer`/`--payload` mode with a viem-verified ABI encoder; needs the true resolving-tx calldata for a live PASS |
 | Demo video | **Not recorded** — the user records demos personally |
 
 ---
@@ -351,7 +353,7 @@ invariant_jobCountMatchesJobsCreated()  (runs: 128)
 Suite result: ok. 4 passed; 0 failed
 
 Test Files  8 passed (8)
-Tests       86 passed (86)
+Tests       87 passed (87)
 ```
 
 | Test area | Count | What it proves |
@@ -362,7 +364,7 @@ Tests       86 passed (86)
 | Hash vectors | 9 | Known-answer question/answer commitments incl. the live receipt #24 hash |
 | Stateful invariants | 4 | Receipts never corrupted, hashes never change, **every minted USDC conserved**, no double-mint |
 | Fork (local anvil) | 2 | Registry against the REAL Diamond + real USDC on an anvil fork of Base Sepolia |
-| Frontend | 86 | Hash vectors, error taxonomy, ABI shape, components, wallet hook, hash routing |
+| Frontend | 87 | Hash vectors (incl. LIVE receipt #28 answer-hash), error taxonomy, ABI shape, components, wallet hook, hash routing |
 
 ---
 
@@ -414,7 +416,7 @@ Live: **https://docket-blush.vercel.app** — production deployment, CSP + secur
 ```
 src/ReceiptRegistry.sol        the record — escrow → createJob → locked receipt on callback
 src/interfaces/                IDiamond · IUSDC · OnChainData (signatures verified live)
-test/                          55 Solidity tests incl. stateful invariants + real-Diamond fork
+test/                          57 Solidity tests (53 + 4 invariants) + 2 real-Diamond fork tests (local anvil)
 scripts/docket_verify.py       independent CLI verifier (RPC failover, answer re-hash mode)
 script/Deploy.s.sol            forge deploy script
 frontend/                      React 19 + viem — ask flow, receipt board, permalink, trust page
