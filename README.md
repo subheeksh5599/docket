@@ -51,6 +51,7 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
 
 - [The 20-second pitch](#the-20-second-pitch)
 - [See it in one command](#-see-it-in-one-command)
+- [Screenshots](#screenshots)
 - [The problem DOCKET solves](#the-problem-docket-solves)
 - [Why a screenshot isn't evidence](#why-a-screenshot-isnt-evidence)
 - [How DOCKET works](#how-docket-works)
@@ -133,6 +134,42 @@ RESULT: RECEIPT VERIFIED - immutable on-chain receipt exists for job 24
 ```
 
 That is the product in one command: an immutable on-chain record, resolved through the real protocol and independently verifiable with zero DOCKET infrastructure.
+
+---
+
+## Screenshots
+
+Real pages from the live deployment — every number shown is read directly from Base Sepolia, nothing doctored.
+
+### Landing
+
+The hero explains the product in one line — "Put a question on the record" — with the live usage banner below it: receipts minted, unique wallets, intents and USDC routed, all read live from the chain.
+
+<img src="assets/landing.png" alt="DOCKET landing — Put a question on the record, live usage banner" width="100%" />
+
+### Dashboard — record tab
+
+Ask a question, pick an intent, and watch the job travel through the protocol. The sidebar reads live network state — registry escrow, job base price — and the usage panel below the ask form shows every receipt ever minted on this registry.
+
+<img src="assets/dashboard.png" alt="DOCKET dashboard — ask panel + live on-chain usage" width="100%" />
+
+### Act on a receipt
+
+DOCKET receipts are machine-consumable: a smart contract can refuse to act unless a valid, locked, resolved receipt passes. This page shows the live gate — a deployed DocketGate contract that verified receipt #28 on-chain and fired its action.
+
+<img src="assets/gate.png" alt="DOCKET gate page — composable evidence, live consumer contract" width="100%" />
+
+### Receipt #28
+
+Every receipt has a permanent permalink that reads straight from the chain: provenance (question commitment, intent, job), the checks that make it valid, and the re-hash verification panel — paste the network response and confirm the commitment yourself.
+
+<img src="assets/receipt-28.png" alt="Receipt #28 — provenance, why-this-is-valid checks, integrity panel" width="100%" />
+
+### Verify
+
+The in-app verifier returns a machine-readable result — an agent (or a judge) can confirm a receipt without trusting the DOCKET website.
+
+<img src="assets/verify.png" alt="DOCKET verify page — independent verification with machine-readable output" width="100%" />
 
 ---
 
