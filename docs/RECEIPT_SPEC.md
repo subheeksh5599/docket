@@ -20,6 +20,24 @@ struct Receipt {
 Read: `getReceipt(uint256 jobId)` on the registry. `locked(jobId)` → bool.
 Reverts (`NoSuchReceipt`) when no receipt exists for that job id.
 
+## Locking & failure semantics
+
+- **Locked = minted.** A receipt is written exactly once, in the protocol
+  callback, and there is **no update function and no delete function** in the
+  contract. `locked(jobId)` is true from the mint onward, forever.
+- **Mint conditions (all must hold, else the callback reverts):** caller is the
+  Telegraph Diamond (`onlyDiamond`), the job was created by this registry, the
+  job is in a terminal/resolved state, the question commitment already exists
+  (ask-before-answer), and the returned answer hash is non-zero.
+- **Double resolution** cannot mint twice: the callback only succeeds on the
+  terminal path, and once minted the receipt row is final — a second callback
+  hits the already-resolved state and reverts.
+- **No receipt exists yet** → `getReceipt` reverts `NoSuchReceipt(jobId)`; the
+  CLI verifier and the UI map that revert to "no receipt" rather than "error".
+- **Cancel path** (`cancelStuckJob`, owner-only) applies only to *unresolved*
+  jobs whose escrow is still in the Diamond — it refunds escrow and can never
+  touch an already-minted receipt.
+
 ## Canonical hashes
 
 ```text

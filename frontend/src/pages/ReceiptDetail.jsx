@@ -137,6 +137,31 @@ export default function ReceiptDetail({ jobId }) {
         )}
       </div>
 
+      {/* ---- JOB LIFECYCLE — the real protocol path ---- */}
+      <div className="panel" style={{ marginTop: 14, padding: '12px 22px 16px' }}>
+        <div className="label" style={{ padding: '8px 0 4px', fontSize: 9, letterSpacing: '0.22em' }}>JOB LIFECYCLE — CREATED → FUNDED → NETWORK → RESOLVED → RECEIPT</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', padding: '10px 0 4px' }}>
+          {['Created', 'Funded (escrow $1)', 'Network resolves', 'Callback to registry', 'Receipt locked'].map((stage, i) => (
+            <span key={stage} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {i > 0 && <span style={{ color: 'var(--faint)', fontSize: 12, margin: '0 2px' }}>→</span>}
+              <span className="label" style={{
+                fontSize: 8.5, letterSpacing: '0.08em',
+                color: i < 4 ? 'var(--ink)' : 'var(--gain)',
+                border: '1px solid ' + (i < 4 ? 'var(--line)' : 'color-mix(in oklch, var(--gain) 50%, var(--line))'),
+                borderRadius: 2, padding: '4px 7px', background: i === 4 ? 'color-mix(in oklch, var(--gain) 10%, var(--bg))' : 'var(--bg-2)',
+              }}>
+                {i < 4 ? stage : '✓ ' + stage}
+              </span>
+            </span>
+          ))}
+        </div>
+        <div className="label" style={{ fontSize: 9, color: 'var(--faint)', lineHeight: 1.7, textTransform: 'none', letterSpacing: '0.02em', paddingTop: 6 }}>
+          every stage ran on the Telegraph Diamond on Base Sepolia — the job's escrow, resolver payment and protocol fee are
+          readable on-chain (<a className="link" href={explorerAddress(REGISTRY)} target="_blank" rel="noreferrer">registry state ↗</a>);
+          the receipt is the terminal proof that the callback landed. DOCKET shows this path — it does not run it.
+        </div>
+      </div>
+
       {/* ---- CRYPTOGRAPHIC INTEGRITY ---- */}
       <div className="panel" style={{ marginTop: 14, padding: '8px 22px 16px', borderColor: 'color-mix(in oklch, var(--signal) 35%, var(--line))' }}>
         <div className="label" style={{ padding: '12px 0 4px', fontSize: 9, letterSpacing: '0.22em' }}>INTEGRITY — ANSWER COMMITMENT</div>

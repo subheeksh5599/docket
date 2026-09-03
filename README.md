@@ -211,7 +211,8 @@ A real job on the real testnet, resolved on-chain through the Telegraph network,
 - **From an explorer:** open the registry address above → Contract → Read → `getReceipt(24)`. Every field is there.
 - **From any RPC:** the `cast call` in [See it in one command](#-see-it-in-one-command).
 - **From the CLI verifier:** `scripts/docket_verify.py 24` — fails over across three public RPCs and re-checks every claim (above).
-- **From the app:** open any receipt permalink (`/#/receipt/:id`) — DOCKET reads the chain and shows the live verification, with a JSON evidence export.
+- **From the app:** open any receipt permalink (`/#/receipt/:id`) — DOCKET reads the chain and shows the live verification, with a JSON evidence export + a machine-readable result for agents.
+- **5-minute judge guide:** [`docs/VERIFY.md`](docs/VERIFY.md) walks a stranger through proving a receipt from a plain RPC — no frontend, no installs.
 
 No DOCKET server, no DOCKET database, no DOCKET key is involved in any of these. The chain is the source of truth.
 
