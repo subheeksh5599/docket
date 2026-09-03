@@ -113,28 +113,14 @@ export async function requestVerification({ question, intent, budgetUsdc, accoun
 }
 
 /// Fetch the most recent receipts GLOBALLY by scanning ReceiptMinted logs on the
-/// registry (bounded to the latest ~6000 blocks ≈ a few hours on Base Sepolia).
+/// registry from its deployment block (a public constant, see the manifest).
 /// Returns newest-first rows: { jobId, owner, intentId, questionHash, answerHash, createdAt, resolved }.
 export async function fetchRecentReceipts(limit = 30) {
   if (!REGISTRY) return [];
   try {
     const latest = await publicClient.getBlockNumber();
-    const fromBlock = latest - 6000n;
-    const logs = await publicClient.getLogs({
-      address: REGISTRY,
-      event: {
-        type: 'event', name: 'ReceiptMinted',
-        inputs: [
-          { type: 'uint256', name: 'jobId', indexed: true },
-          { type: 'address', name: 'owner', indexed: true },
-          { type: 'bytes32', name: 'intentId', indexed: true },
-          { type: 'bytes32', name: 'questionHash' },
-          { type: 'bytes32', name: 'answerHash' },
-          { type: 'uint256', name: 'timestamp' },
-        ],
-      },
-      fromBlock, toBlock: latest,
-    });
+    const fromBlock = 46290000n; // v2 registry deployment block (46,293,484 — 2026-09-02); below this no v2 logs exist
+    const logs = await getLogsChunked(fromBlock, latest);
     return logs
       .map((l) => ({
         jobId: Number(l.args.jobId),
@@ -151,28 +137,41 @@ export async function fetchRecentReceipts(limit = 30) {
   } catch { return []; }
 }
 
+// eth_getLogs is capped at 10k blocks per call — walk the range in chunks.
+async function getLogsChunked(from, to) {
+  const RECEIPT_MINTED = {
+    type: 'event', name: 'ReceiptMinted',
+    inputs: [
+      { type: 'uint256', name: 'jobId', indexed: true },
+      { type: 'address', name: 'owner', indexed: true },
+      { type: 'bytes32', name: 'intentId', indexed: true },
+      { type: 'bytes32', name: 'questionHash' },
+      { type: 'bytes32', name: 'answerHash' },
+      { type: 'uint256', name: 'timestamp' },
+    ],
+  };
+  const out = [];
+  const STEP = 9000n;
+  let cursor = from;
+  while (cursor <= to) {
+    const end = cursor + STEP > to ? to : cursor + STEP;
+    const logs = await publicClient.getLogs({ address: REGISTRY, event: RECEIPT_MINTED, fromBlock: cursor, toBlock: end });
+    out.push(...logs);
+    cursor = end + 1n;
+    if (logs.length > 0 && cursor > to) break;
+  }
+  return out;
+}
+
 /// Live protocol metrics — every number is a real chain read (no fake counters).
+/// Scans ALL ReceiptMinted logs since the registry deployment (chunked), so the
+/// counts are permanent totals, not a time window.
 export async function fetchMetrics() {
   const out = { records: null, resolved: null, wallets: null, jobValue: null, intents: null };
   if (!REGISTRY) return out;
   try {
     const latest = await publicClient.getBlockNumber();
-    const fromBlock = latest - 6000n;
-    const logs = await publicClient.getLogs({
-      address: REGISTRY,
-      event: {
-        type: 'event', name: 'ReceiptMinted',
-        inputs: [
-          { type: 'uint256', name: 'jobId', indexed: true },
-          { type: 'address', name: 'owner', indexed: true },
-          { type: 'bytes32', name: 'intentId', indexed: true },
-          { type: 'bytes32', name: 'questionHash' },
-          { type: 'bytes32', name: 'answerHash' },
-          { type: 'uint256', name: 'timestamp' },
-        ],
-      },
-      fromBlock, toBlock: latest,
-    });
+    const logs = await getLogsChunked(46290000n, latest);
     out.records = logs.length;
     out.wallets = new Set(logs.map((l) => l.args.owner.toLowerCase())).size;
     out.intents = new Set(logs.map((l) => l.args.intentId)).size;

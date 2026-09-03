@@ -146,7 +146,7 @@ export default function ReceiptsPage({ wallet }) {
 
       <div style={{ marginTop: 12 }}>
         <span className="label" style={{ fontSize: 9, color: 'var(--faint)' }}>
-          {filter === 'My receipts' ? 'your receipts, read live per-wallet. ' : ''}global list = latest ~6000 blocks. every row opens a permalink that verifies from the chain.
+          {filter === 'My receipts' ? 'your receipts, read live per-wallet. ' : ''}every receipt ever minted on this registry, read live from the chain. every row opens a permalink that verifies from the chain.
         </span>
       </div>
     </div>
