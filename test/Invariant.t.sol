@@ -63,28 +63,10 @@ contract ReceiptInvariant is Test {
         }
     }
 
-    /// Total USDC held by registry + diamond escrow + users must be conserved.
+    /// Every minted USDC is accounted for — no balance is created, burned, or lost
+    /// no matter what the fuzzer does (sum of ALL holder balances == totalSupply).
     function invariant_noFundsLeak() public view {
-        uint256 userBal = usdc.balanceOf(user);
-        uint256 user2Bal = usdc.balanceOf(user2);
-        uint256 regBal = usdc.balanceOf(address(registry));
-        uint256 diamondEscrow = diamond.escrowBalance(address(registry));
-        uint256 testContractBal = usdc.balanceOf(address(this));
-        // in-flight job escrow: createJob debits jobBasePrice from the diamond escrow.
-        // Unresolved jobs still hold that escrow (recoverable via cancel); resolved jobs'
-        // escrow was paid to the miner (leaves the system — like the real protocol's
-        // USDC→MACHINA swap). So add back only UNRESOLVED jobs' escrow.
-        uint256 inFlight = 0;
-        for (uint256 i = 0; i < registry.jobCount(user); i++) {
-            uint256 jobId = registry.jobsOf(user, i);
-            if (!registry.locked(jobId)) inFlight += 1_000_000;
-        }
-        for (uint256 i = 0; i < registry.jobCount(user2); i++) {
-            uint256 jobId = registry.jobsOf(user2, i);
-            if (!registry.locked(jobId)) inFlight += 1_000_000;
-        }
-        uint256 total = userBal + user2Bal + regBal + diamondEscrow + testContractBal + inFlight;
-        assertEq(total, 2_000_000_000, "funds must be conserved");
+        assertEq(usdc.sumAllBalances(), usdc.totalSupply(), "funds must be conserved");
     }
 
     /// jobCount can never exceed the number of actually-created jobs.

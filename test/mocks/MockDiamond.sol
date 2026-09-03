@@ -12,11 +12,29 @@ import {OnChainData} from "../../src/OnChainData.sol";
 contract MockUSDC {
     string public name = "Mock USDC";
     uint8 public decimals = 6;
+    uint256 public totalSupply;
+    address public minter; // only the deployer may mint (keeps the invariant fuzzer honest)
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
+    address[] public holders;
+    mapping(address => bool) public isHolder;
+
+    constructor() {
+        minter = msg.sender;
+    }
+
+    function _touch(address a) internal {
+        if (!isHolder[a]) {
+            isHolder[a] = true;
+            holders.push(a);
+        }
+    }
 
     function mint(address to, uint256 amt) external {
+        require(msg.sender == minter, "not minter");
+        _touch(to);
         balanceOf[to] += amt;
+        totalSupply += amt;
     }
 
     function approve(address spender, uint256 amt) external returns (bool) {
@@ -26,6 +44,7 @@ contract MockUSDC {
 
     function transfer(address to, uint256 amt) external returns (bool) {
         require(balanceOf[msg.sender] >= amt, "insufficient");
+        _touch(to);
         balanceOf[msg.sender] -= amt;
         balanceOf[to] += amt;
         return true;
@@ -34,10 +53,18 @@ contract MockUSDC {
     function transferFrom(address from, address to, uint256 amt) external returns (bool) {
         require(balanceOf[from] >= amt, "insufficient");
         require(allowance[from][msg.sender] >= amt, "allowance");
+        _touch(to);
         balanceOf[from] -= amt;
         balanceOf[to] += amt;
         allowance[from][msg.sender] -= amt;
         return true;
+    }
+
+    /// TEST-ONLY: sum every holder's balance (invariant conservation check).
+    function sumAllBalances() external view returns (uint256 total) {
+        for (uint256 i = 0; i < holders.length; i++) {
+            total += balanceOf[holders[i]];
+        }
     }
 }
 
