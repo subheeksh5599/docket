@@ -29,3 +29,16 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: VITE_REGISTRY_ADDRESS=0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48 npm run build
+
+  mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 docket_mcp.py --self-test
+      - run: python3 -m unittest test_mcp -v

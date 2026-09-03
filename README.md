@@ -256,6 +256,7 @@ The full loop: the user signs two transactions, the registry commits the ask and
 | Telegraph Diamond | The protocol. Routes jobs to miners, pays them, delivers the callback. | Real ERC-8183 on-chain jobs (21 facets, live on Base Sepolia). |
 | `Receipt` | `jobId · intentId · questionHash · answerHash · createdAt · resolved` | Written once by the callback; locked after. |
 | `scripts/docket_verify.py` | Independent CLI verifier. | Read-only; RPC failover across 3 providers; optional `--answer` re-hash mode. |
+| `mcp/docket_mcp.py` | MCP server (stdio) — agents call `verify_docket_receipt`, `get_docket_receipt`, `verify_docket_answer` before acting. | Read-only; same verification core as the CLI, zero deps. |
 | Frontend | Ask flow, receipt board, permalink view, trust page. | Reads chain via viem; writes only via the user's own wallet signature. |
 
 ### The canonical hash rule
@@ -428,9 +429,11 @@ src/interfaces/                IDiamond · IUSDC · OnChainData (signatures veri
 test/                          64 Solidity tests (CI) + 2 real-Diamond fork tests (local anvil)
 src/DocketGate.sol            consumer demo — act on a receipt (evidence primitive)
 scripts/docket_verify.py       independent CLI verifier (RPC failover, answer re-hash mode)
+mcp/docket_mcp.py              MCP server (stdio) — verify/get receipt tools for agents, zero deps
+mcp/_keccak.py                 pure-python keccak256 (vendored — verified vs `cast`)
 script/Deploy.s.sol            forge deploy script
 frontend/                      React 19 + viem — ask flow, receipt board, permalink, trust page
-docs/                          TELEGRAPH_DEPLOYMENT · THREAT_MODEL · RUNBOOK · INVARIANTS · SECURITY · RECEIPT_SPEC · manifest
+docs/                          TELEGRAPH_DEPLOYMENT · THREAT_MODEL · RUNBOOK · INVARIANTS · SECURITY · RECEIPT_SPEC · VERIFY · manifest
 .github/workflows/ci.yml       contracts + frontend CI (green on main)
 ```
 
