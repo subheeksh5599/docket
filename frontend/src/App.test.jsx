@@ -13,11 +13,11 @@ vi.mock('./lib/chain', () => ({
   publicClient: { readContract: vi.fn().mockResolvedValue(0n) },
 }));
 
-vi.mock('./components/AskPanel', () => ({ default: () => <div>ASK-PANEL</div> }));
-vi.mock('./components/ReceiptFeed', () => ({ default: () => <div>RECEIPT-FEED</div> }));
-vi.mock('./components/SideStats', () => ({ default: () => <div>SIDE-STATS</div> }));
-vi.mock('./components/ReceiptView', () => ({ default: ({ jobId }) => <div>RECEIPT-VIEW:{jobId}</div> }));
-vi.mock('./components/TrustPage', () => ({ default: () => <div>TRUST-PAGE</div> }));
+vi.mock('./pages/HomePage', () => ({ default: () => <div>HOME-PAGE</div> }));
+vi.mock('./pages/ReceiptsPage', () => ({ default: () => <div>RECEIPTS-PAGE</div> }));
+vi.mock('./pages/ReceiptDetail', () => ({ default: ({ jobId }) => <div>RECEIPT-DETAIL:{jobId}</div> }));
+vi.mock('./pages/VerifyPage', () => ({ default: () => <div>VERIFY-PAGE</div> }));
+vi.mock('./pages/HowItWorks', () => ({ default: () => <div>HOW-IT-WORKS</div> }));
 
 import App from './App';
 
@@ -26,33 +26,38 @@ describe('App hash routing', () => {
     window.location.hash = '';
   });
 
-  it('renders the ask panel by default (dashboard)', () => {
+  it('renders the home page by default', () => {
     render(<App />);
-    expect(screen.getByText('ASK-PANEL')).toBeTruthy();
-    expect(screen.getByText('SIDE-STATS')).toBeTruthy();
+    expect(screen.getByText('HOME-PAGE')).toBeTruthy();
   });
 
-  it('renders the receipt feed at #/receipts', async () => {
+  it('renders the receipts page at #/receipts', () => {
     window.location.hash = '#/receipts';
     render(<App />);
-    expect(await screen.findByText('RECEIPT-FEED')).toBeTruthy();
+    expect(screen.getByText('RECEIPTS-PAGE')).toBeTruthy();
   });
 
   it('renders a single receipt at #/receipt/:id (permalink)', () => {
-    window.location.hash = '#/receipt/23';
+    window.location.hash = '#/receipt/28';
     render(<App />);
-    expect(screen.getByText('RECEIPT-VIEW:23')).toBeTruthy();
+    expect(screen.getByText('RECEIPT-DETAIL:28')).toBeTruthy();
   });
 
-  it('renders the trust page at #/trust', () => {
-    window.location.hash = '#/trust';
+  it('renders the verify page at #/verify', () => {
+    window.location.hash = '#/verify';
     render(<App />);
-    expect(screen.getByText('TRUST-PAGE')).toBeTruthy();
+    expect(screen.getByText('VERIFY-PAGE')).toBeTruthy();
   });
 
-  it('falls back to ask for unknown routes', () => {
+  it('renders how-it-works at #/how', () => {
+    window.location.hash = '#/how';
+    render(<App />);
+    expect(screen.getByText('HOW-IT-WORKS')).toBeTruthy();
+  });
+
+  it('falls back to home for unknown routes', () => {
     window.location.hash = '#/nonsense';
     render(<App />);
-    expect(screen.getByText('ASK-PANEL')).toBeTruthy();
+    expect(screen.getByText('HOME-PAGE')).toBeTruthy();
   });
 });
