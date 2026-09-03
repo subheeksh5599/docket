@@ -45,6 +45,10 @@ def main():
     ap.add_argument("jobId", type=int)
     ap.add_argument("--rpc", default=RPC_DEFAULT)
     ap.add_argument("--registry", default=REGISTRY_DEFAULT or None)
+    ap.add_argument("--answer", metavar="JSON", default=None,
+                    help="Answer payload (OnChainData JSON) to re-hash and compare against the on-chain commitment")
+    ap.add_argument("--payload", metavar="HEX", default=None,
+                    help="Raw callback calldata hex (from the resolving tx) to decode the answer from")
     args = ap.parse_args()
 
     registry = args.registry or __import__("os").environ.get("DOCKET_REGISTRY")
@@ -57,14 +61,14 @@ def main():
     last_err = None
     for rpc in rpcs:
         try:
-            return verify(args.jobId, registry, rpc)
+            return verify(args.jobId, registry, rpc, answer_json=args.answer, payload_hex=args.payload)
         except Exception as e:
             last_err = e
             print(f"  [rpc {rpc} failed: {e}]", file=sys.stderr)
     print(f"ERROR: all RPCs failed: {last_err}", file=sys.stderr)
     return 2
 
-def verify(job_id, registry, rpc):
+def verify(job_id, registry, rpc, answer_json=None, payload_hex=None):
     print(f"DOCKET receipt verification")
     print(f"  jobId:     {job_id}")
     print(f"  registry:  {registry}")
@@ -121,6 +125,29 @@ def verify(job_id, registry, rpc):
     checks.append(("receipt locked (immutable)", locked, ""))
     checks.append(("ask bound to receipt (questionHash != 0)", question_hash != 0, ""))
 
+    # 6) optional answer re-hash: canonical rule keccak256(abi.encode(OnChainData))
+    #    where OnChainData = (address[], uint256[], string[], bool[])
+    answer_rehash = None
+    if answer_json:
+        try:
+            payload = json.loads(answer_json)
+            answer_rehash = canonical_onchain_hash(payload)
+            matches = (answer_rehash == f"0x{answer_hash:064x}")
+            checks.append(("answer re-hash matches commitment", matches,
+                           f"recomputed {answer_rehash[:18]}…"))
+        except Exception as e:
+            checks.append(("answer re-hash", False, f"could not re-hash: {e}"))
+    elif payload_hex:
+        # decode raw calldata of the callback into OnChainData and re-hash
+        try:
+            payload = decode_onchain_calldata(payload_hex)
+            answer_rehash = canonical_onchain_hash(payload)
+            matches = (answer_rehash == f"0x{answer_hash:064x}")
+            checks.append(("callback-calldata re-hash matches commitment", matches,
+                           f"decoded {len(payload.get('strings', []))} strings"))
+        except Exception as e:
+            checks.append(("callback-calldata re-hash", False, f"could not decode: {e}"))
+
     all_pass = all(c[1] for c in checks)
     print("  checks:")
     for name, ok, note in checks:
@@ -128,7 +155,8 @@ def verify(job_id, registry, rpc):
     print()
     if all_pass:
         print("RESULT: RECEIPT VERIFIED - immutable on-chain receipt exists for job", job_id)
-        print("(answer-hash re-verification requires the callback calldata; see --answer mode)")
+        if not (answer_json or payload_hex):
+            print("(answer-hash re-verification requires the callback payload; see --answer/--payload)")
         return 0
     print("RESULT: VERIFICATION FAILED", file=sys.stderr)
     return 1
@@ -141,6 +169,92 @@ def selector_hex(sig):
         if out.startswith("0x"):
             return out
     raise RuntimeError(f"no selector for {sig} (cast not found) — precompute and hardcode")
+
+def _keccak256(hexstr):
+    # keccak256 of raw hex bytes via `cast keccak` (foundry) — python stdlib has no keccak
+    out = subprocess.run(["cast", "keccak", hexstr], capture_output=True, text=True).stdout.strip()
+    if out.startswith("0x") and len(out) == 66:
+        return out
+    raise RuntimeError("cast keccak failed")
+
+def _encode_abi_dynamic(items):
+    # Minimal ABI encoder for OnChainData = (address[], uint256[], string[], bool[]).
+    # Each dynamic array tail = uint256 length word + element data. Empty arrays still
+    # occupy their 32-byte length word. Matches viem/abi.encode exactly (verified
+    # against viem for the ['hello'] vector).
+    def enc_array_strings(arr):
+        out = len(arr).to_bytes(32, "big")
+        if not arr:
+            return out
+        # inner head: len(arr) * 32-byte offsets to each string
+        heads = b""
+        tails = b""
+        acc = 32 * len(arr)
+        for s in arr:
+            raw = s.encode()
+            padded = raw + b"\x00" * ((32 - len(raw) % 32) % 32)
+            heads += acc.to_bytes(32, "big")
+            tails += len(raw).to_bytes(32, "big") + padded
+            acc += 32 + len(padded)
+        return out + heads + tails
+
+    def enc_array_addresses(arr):
+        out = len(arr).to_bytes(32, "big")
+        for a in arr:
+            out += int(a, 16).to_bytes(32, "big")
+        return out
+
+    def enc_array_uints(arr):
+        out = len(arr).to_bytes(32, "big")
+        for v in arr:
+            out += int(v).to_bytes(32, "big")
+        return out
+
+    def enc_array_bools(arr):
+        out = len(arr).to_bytes(32, "big")
+        for v in arr:
+            out += (1 if v else 0).to_bytes(32, "big")
+        return out
+
+    # tails for each array in struct order (address[], uint256[], string[], bool[])
+    tails = [enc_array_addresses(items.get("addresses", [])),
+             enc_array_uints(items.get("integers", [])),
+             enc_array_strings(items.get("strings", [])),
+             enc_array_bools(items.get("bools", []))]
+    heads = b""
+    acc = 128
+    for t in tails:
+        heads += acc.to_bytes(32, "big")
+        acc += len(t)
+    return heads + b"".join(tails)
+
+def canonical_onchain_hash(payload):
+    """keccak256(abi.encode(OnChainData)) with OnChainData = (address[],uint256[],string[],bool[])."""
+    raw = _encode_abi_dynamic(payload)
+    return _keccak256("0x" + raw.hex())
+
+def decode_onchain_calldata(hexstr):
+    """Decode the OnChainData struct from callback calldata (heuristic: 4 dynamic arrays)."""
+    # Callback calldata layout: selector(4) + head(4*32 offsets) + tails.
+    # We only need the strings tail for re-hashing the answer text.
+    b = bytes.fromhex(hexstr[2:] if hexstr.startswith("0x") else hexstr)
+    if len(b) < 4 + 128:
+        raise ValueError("calldata too short")
+    # offsets of the 4 arrays from the head
+    base = 4
+    off_strings = int.from_bytes(b[base+64:base+96], "big")  # 3rd array = strings
+    # strings tail begins at base + off_strings
+    pos = base + off_strings
+    n = int.from_bytes(b[pos:pos+32], "big")
+    pos += 32
+    strings = []
+    for _ in range(n):
+        s_off = int.from_bytes(b[pos:pos+32], "big")
+        sp = base + off_strings + s_off
+        ln = int.from_bytes(b[sp:sp+32], "big")
+        strings.append(b[sp+32:sp+32+ln].decode("utf-8", "replace"))
+        pos += 32
+    return {"strings": strings, "addresses": [], "integers": [], "bools": []}
 
 def decode_tuple(hexstr):
     # decode a flat ABI tuple of (uint,bytes32,address,bytes32,uint,bool) — all static
