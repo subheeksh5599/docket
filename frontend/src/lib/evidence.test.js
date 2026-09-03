@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   receiptToEvidence, evidenceToJson, downloadEvidence, receiptPermalink,
   explorerTx, explorerAddress, verifyChecksSummary, EXPLORER,
+  evidenceToTxt, downloadEvidenceBundle,
 } from './evidence';
 
 const fullReceipt = {
@@ -67,6 +68,47 @@ describe('downloadEvidence', () => {
     downloadEvidence(receiptToEvidence(fullReceipt), 23);
     expect(clicks).toEqual(['docket-receipt-23.json']);
     expect(revoked).toEqual(['blob:fake']);
+  });
+});
+
+describe('evidenceToTxt', () => {
+  it('renders a human-readable artifact with the verify command', () => {
+    const e = receiptToEvidence(fullReceipt);
+    const txt = evidenceToTxt(e);
+    expect(txt).toContain('DOCKET RECEIPT — docket.receipt.v1');
+    expect(txt).toContain('jobId:          23');
+    expect(txt).toContain('getReceipt');
+    expect(txt).toContain('sepolia.base.org');
+  });
+
+  it('notes a PASS when verified', () => {
+    const e = receiptToEvidence({ ...fullReceipt, _pass: true });
+    expect(evidenceToTxt(e)).toContain('Verification: PASS');
+  });
+
+  it('omits the PASS line when not verified', () => {
+    const e = receiptToEvidence(fullReceipt);
+    expect(evidenceToTxt(e)).not.toContain('Verification: PASS');
+  });
+});
+
+describe('downloadEvidenceBundle', () => {
+  it('downloads json + txt + sha256 artifacts', async () => {
+    const saved = [];
+    const realDigest = globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+    globalThis.crypto.subtle.digest = async () => new Uint8Array(32).fill(7);
+    try {
+      globalThis.URL.createObjectURL = vi.fn(() => 'blob:x');
+      globalThis.URL.revokeObjectURL = vi.fn();
+      globalThis.document.body.appendChild = vi.fn((el) => { el.click = () => saved.push(el.download); });
+      const e = receiptToEvidence(fullReceipt);
+      await downloadEvidenceBundle(e, 23);
+      expect(saved).toContain('docket-receipt-23.json');
+      expect(saved).toContain('docket-receipt-23.txt');
+      expect(saved).toContain('docket-receipt-23.sha256');
+    } finally {
+      globalThis.crypto.subtle.digest = realDigest;
+    }
   });
 });
 

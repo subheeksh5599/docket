@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchReceipt, REGISTRY } from '../lib/chain';
 import { canonicalQuestionHash } from '../lib/hash';
 import {
-  receiptToEvidence, downloadEvidence, receiptPermalink, explorerAddress,
+  receiptToEvidence, downloadEvidenceBundle, receiptPermalink, explorerAddress,
   verifyChecksSummary,
 } from '../lib/evidence';
 
@@ -97,8 +97,8 @@ export default function ReceiptView({ jobId }) {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <button className="btn-pill-primary" onClick={() => downloadEvidence(evidence, receipt.jobId?.toString?.() ?? jobId)}>
-          Export evidence (JSON)
+        <button className="btn-pill-primary" onClick={() => downloadEvidenceBundle(evidence, receipt.jobId?.toString?.() ?? jobId)}>
+          Export evidence bundle (json + txt + sha256)
         </button>
         <button
           className="btn-pill-secondary"
