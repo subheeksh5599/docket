@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchUserJobCount, fetchReceipt, REGISTRY } from '../lib/chain';
+import { publicClient, fetchUserJobCount, fetchReceipt, REGISTRY, registryAbi } from '../lib/chain';
 import { canonicalAnswerHash } from '../lib/hash';
 
 const EXPLORER = 'https://sepolia.basescan.org';
@@ -33,7 +33,6 @@ export default function ReceiptBoard({ wallet }) {
 
   async function fetchReceiptForIdx(address, idx) {
     try {
-      const { publicClient, registryAbi } = await import('../lib/chain');
       const jobId = await publicClient.readContract({ address: REGISTRY, abi: registryAbi, functionName: 'jobsOf', args: [address, BigInt(idx)] });
       const r = await fetchReceipt(Number(jobId));
       return { jobId: jobId.toString(), resolved: r.resolved, answerHash: r.answerHash, questionHash: r.questionHash, createdAt: Number(r.createdAt), intentId: r.intentId };
@@ -93,7 +92,6 @@ function ReceiptCard({ r }) {
   const runVerify = async () => {
     setVerifyState('checking');
     try {
-      const { publicClient } = await import('../lib/chain');
       const receipt = await fetchReceipt(Number(r.jobId === '—' ? 0 : r.jobId));
       // recompute the canonical hash of the response (needs the answer payload; for a
       // stored receipt we verify: receipt exists, resolved, locked — the immutable

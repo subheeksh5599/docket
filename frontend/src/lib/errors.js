@@ -32,7 +32,7 @@ export function classifyError(err) {
   if (/approval|allowance/i.test(lower) && /reject|denied/i.test(lower)) return 'APPROVAL_REJECTED';
   if (/insufficient funds|out of gas|gas required/i.test(lower)) return 'INSUFFICIENT_ETH';
   if (/429|rate limit/i.test(lower)) return 'RPC_RATE_LIMITED';
-  if (/fetch failed|network error|timeout|socket|connection|ECONN/i.test(lower)) return 'RPC_UNAVAILABLE';
+  if (/fetch failed|network error|timeout|timed out|socket|connection|ECONN/i.test(lower)) return 'RPC_UNAVAILABLE';
   if (/execution reverted|revert/i.test(lower)) return 'CREATE_JOB_REVERTED';
   if (/unsupported intent|invalid intent|not.*intent/i.test(lower)) return 'INVALID_INTENT';
   if (/wrong network|chain.*84532|unsupported chain/i.test(lower)) return 'WRONG_NETWORK';
