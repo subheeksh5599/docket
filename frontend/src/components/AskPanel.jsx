@@ -42,8 +42,9 @@ export default function AskPanel({ wallet }) {
 
       <div className="space-y-5">
         <div>
-          <label className="eyebrow text-pure-white/50 block mb-2">QUESTION</label>
+          <label htmlFor="ask-question" className="eyebrow text-pure-white/50 block mb-2">QUESTION</label>
           <textarea
+            id="ask-question"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
@@ -53,15 +54,15 @@ export default function AskPanel({ wallet }) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="eyebrow text-pure-white/50 block mb-2">INTENT</label>
-            <select value={intent} onChange={(e) => setIntent(e.target.value)}
+            <label htmlFor="ask-intent" className="eyebrow text-pure-white/50 block mb-2">INTENT</label>
+            <select id="ask-intent" value={intent} onChange={(e) => setIntent(e.target.value)}
               className="w-full bg-charcoal text-pure-white border border-white/10 rounded-[10px] p-3 focus:outline-none focus:border-neon-pulse">
               {INTENTS.map((i) => <option key={i} value={i}>{i}</option>)}
             </select>
           </div>
           <div>
-            <label className="eyebrow text-pure-white/50 block mb-2">BUDGET (μUSDC)</label>
-            <input value={budget} onChange={(e) => setBudget(e.target.value)}
+            <label htmlFor="ask-budget" className="eyebrow text-pure-white/50 block mb-2">BUDGET (μUSDC)</label>
+            <input id="ask-budget" value={budget} onChange={(e) => setBudget(e.target.value)}
               className="w-full bg-charcoal text-pure-white border border-white/10 rounded-[10px] p-3 focus:outline-none focus:border-neon-pulse" />
             <p className="text-xs text-pure-white/40 mt-1">Job price on testnet = 1,000,000 (1 USDC). Escrowed on the Diamond.</p>
           </div>
