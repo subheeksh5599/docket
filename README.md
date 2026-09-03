@@ -53,7 +53,9 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
 
 ## Table of contents
 
+- [The 20-second pitch](#the-20-second-pitch)
 - [See it in one command](#-see-it-in-one-command)
+- [Screenshots](#screenshots)
 - [The problem DOCKET solves](#the-problem-docket-solves)
 - [Why a screenshot isn't evidence](#why-a-screenshot-isnt-evidence)
 - [How DOCKET works](#how-docket-works)
@@ -63,6 +65,7 @@ The invariant, printed on every page of the app: **DOCKET records what the netwo
   - [4 · The callback mints the receipt — one write](#4--the-callback-mints-the-receipt--one-write)
   - [5 · Locked. No update function exists.](#5--locked-no-update-function-exists)
 - [The live receipt](#the-live-receipt)
+- [Live on-chain graphs](#live-on-chain-graphs)
 - [Verify it yourself](#verify-it-yourself)
 - [Architecture](#architecture)
   - [The record, component by component](#the-record-component-by-component)
@@ -139,6 +142,30 @@ That is the product in one command: an immutable on-chain record, resolved throu
 
 ---
 
+## Screenshots
+
+Real pages from the live deployment (1440×900):
+
+![Landing — interactive dither hero, typewriter headline, live receipt proof](assets/shot-landing.png)
+
+The landing: interactive WebGL dither hero, typewriter headline with hover-swap sponsor words (Telegraph / Base Sepolia / ERC-8183), and a live receipt read fresh from the chain.
+
+![Record — the create panel with the staged protocol timeline](assets/shot-record.png)
+
+The record panel: ask a question, pick an intent, escrow 1 USDC — then watch the job travel (JOB CREATED → MINER → SUBMITTED → SETTLED → RECEIPT MINTED) as the app polls the chain.
+
+![Receipt — provenance + integrity with independent re-hash](assets/shot-receipt.png)
+
+A receipt permalink: NETWORK RESPONSE framing (never "truth"), full provenance with explorer links, and the keccak commitment with a paste-to-verify panel that needs no trust in DOCKET.
+
+![Receipts — the Etherscan-style index](assets/shot-receipts.png)
+
+The receipts index: search, All/Pending/Resolved/My-receipts filters, every receipt ever minted read live from the chain.
+
+> Screenshots captured from [docket-blush.vercel.app](https://docket-blush.vercel.app). The receipts shown are real on-chain records — no mock data, no doctored state.
+
+---
+
 ## The problem DOCKET solves
 
 You ask an AI network a consequential question — *is this contract safe? what is the verified price? did this transaction settle?* — and you act on the answer. Six months later someone asks you to prove what the network said, who said it, and when. What do you show them?
@@ -152,7 +179,7 @@ A screenshot. A copied chat line. A link to a conversation that may have been ed
 - **Blockchain explorers show transactions**, but a plain transaction doesn't bind the *question* to the *answer* — and most apps never put the answer on-chain at all.
 - **Centralized "certificate" services** replace one trusted party (the agent) with another trusted party (the certifier). Nothing about the record is independently checkable.
 
-DOCKET treats **the record itself** as the product. The artifact is minted by the protocol's own settlement callback, on-chain, in the same transaction that pays the miner — so the record is honest by construction, not a label slapped on after the fact. And it's keyed to the *question*, so the ask and the answer can never be separated.
+DOCKET treats **the record itself** as the product. The artifact is minted by the protocol's own settlement callback, on-chain, in the same transaction that pays the resolver — so the record is honest by construction, not a label slapped on after the fact. And it's keyed to the *question*, so the ask and the answer can never be separated.
 
 ## Why a screenshot isn't evidence
 
@@ -206,6 +233,26 @@ A real job on the real testnet, resolved on-chain through the Telegraph network,
 | questionHash | `0x5f8aa309e059516aaff6d218737f5740c073d7d8bbca87dd646930296e96e7b1` |
 | answerHash | `0x23d1c6ef8212c9601d12dc626ecdbce5965e23a1622df5bbf8e47fec280d44c2` |
 | Status | resolved · **locked** · verified PASS |
+
+## Live on-chain graphs
+
+Every point below is a real `ReceiptMinted` event read from the registry on Base Sepolia (job ids #24 · #28 · #30 · #31 · #32). No fabricated data — this is the complete on-chain history since deployment.
+
+![Receipts minted — cumulative, all time](assets/graph-receipts-cumulative.svg)
+
+The full mint history: every receipt, in order, as the protocol's callback wrote it on-chain. Two receipts minted in the same minute (#30, #31) are spread slightly on the x-axis so both markers are visible.
+
+![Total protocol value moved](assets/graph-escrow-total.svg)
+
+Each job escrows exactly the job base price (1 USDC on testnet) into the Telegraph Diamond. The full escrow total is the real money that moved through the pipeline.
+
+![Receipts by intent](assets/graph-intents.svg)
+
+Live receipts by intent — three distinct intents actually exercised on-chain: CRYPTO_PRICE, GAS_PRICE and WEATHER_CHECK.
+
+Regenerate anytime with the live data: `scripts/gen_graphs.py` (reads `ReceiptMinted` logs via RPC and rewrites the SVGs).
+
+---
 
 ## Verify it yourself
 
@@ -298,7 +345,7 @@ Telegraph is load-bearing — not a logo on a page:
 
 ## Engineering decisions & the hard problems
 
-- **The callback IS the receipt.** The protocol's settlement callback writes the record in the same transaction that pays the miner. That is what makes the artifact honest by construction — it is produced by the mechanism of payment, not by an app with a database.
+- **The callback IS the receipt.** The protocol's settlement callback writes the record in the same transaction that pays the resolver. That is what makes the artifact honest by construction — it is produced by the mechanism of payment, not by an app with a database.
 - **Commit the ask before the answer.** The callback only carries the answer; the question and intent are committed to storage when the job is created. The receipt therefore binds ask → answer even though the protocol never echoes the question back.
 - **Single cheap write.** The protocol documents that callback reverts are swallowed — so the receipt path is exactly one storage write, with all data pre-committed or in the callback payload. There is nothing expensive to fail.
 - **Immutability by absence of code.** No `updateReceipt`, no `setX`, no owner override. Once `locked`, the record is chain state and nothing in the contract can change it. The tests assert there is no write path.
