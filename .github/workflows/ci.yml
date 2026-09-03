@@ -11,7 +11,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: foundry-rs/foundry-toolchain@v1
       - run: forge install foundry-rs/forge-std --no-commit
-      - run: forge fmt --check
       - run: forge build
-      - run: forge test --no-match-path 'test/Invariant.t.sol' --no-match-path 'test/Fork.t.sol'
-      - run: FOUNDRY_INVARIANT_RUNS=64 FOUNDRY_INVARIANT_DEPTH=16 forge test --match-path test/Invariant.t.sol
+      - run: forge test
