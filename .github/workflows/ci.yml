@@ -14,6 +14,7 @@ jobs:
       - run: forge fmt --check
       - run: forge build
       - run: forge test --no-match-path test/Fork.t.sol
+      - run: FOUNDRY_INVARIANT_RUNS=128 FOUNDRY_INVARIANT_DEPTH=16 forge test --match-path test/Invariant.t.sol
 
   frontend:
     runs-on: ubuntu-latest
