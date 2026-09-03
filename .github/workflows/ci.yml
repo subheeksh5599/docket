@@ -23,7 +23,10 @@ jobs:
       - name: Run tests (unit + edge + vectors, excludes fork which needs a local anvil)
         run: forge test --no-match-path 'test/Fork.t.sol'
       - name: Run invariant suite (bounded)
-        run: FOUNDRY_INVARIANT_RUNS=128 FOUNDRY_INVARIANT_DEPTH=16 forge test --match-path test/Invariant.t.sol
+        env:
+          FOUNDRY_INVARIANT_RUNS: "128"
+          FOUNDRY_INVARIANT_DEPTH: "16"
+        run: forge test --match-path test/Invariant.t.sol
 
   frontend:
     name: Frontend (vite + vitest)
