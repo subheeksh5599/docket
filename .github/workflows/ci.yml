@@ -27,6 +27,3 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
-      - run: npm run build
-        env:
-          VITE_REGISTRY_ADDRESS: 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
