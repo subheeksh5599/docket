@@ -134,7 +134,8 @@ contract ReceiptRegistry {
         // Pull the budget, escrow it on the Diamond, then create the job.
         bool ok = usdc.transferFrom(msg.sender, address(this), budgetUsdc);
         if (!ok) revert EscrowDepositFailed();
-        usdc.approve(address(diamond), budgetUsdc);
+        bool approved = usdc.approve(address(diamond), budgetUsdc);
+        if (!approved) revert EscrowDepositFailed();
         diamond.depositUSDC(budgetUsdc);
 
         uint256 newJob = diamond.createJob(intentId, params, address(this));
