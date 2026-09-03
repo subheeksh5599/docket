@@ -17,8 +17,6 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-    env:
-      VITE_REGISTRY_ADDRESS: 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
     defaults:
       run:
         working-directory: frontend
@@ -29,4 +27,4 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
-      - run: npm run build
+      - run: VITE_REGISTRY_ADDRESS=0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48 npm run build
