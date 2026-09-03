@@ -17,10 +17,16 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: cd frontend && npm ci
-      - run: cd frontend && npm test
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_REGISTRY_ADDRESS: 0xb5Ed97b4F10da09B9b54594925F0Ba5b528BBf48
