@@ -49,7 +49,7 @@ export default function AskPanel({ wallet }) {
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
             placeholder="Is this token's contract safe? What is the verified price of X?"
-            className="w-full bg-charcoal text-pure-white border border-white/10 rounded-[10px] p-4 text-base placeholder:text-pure-white/30 focus:outline-none focus:border-neon-pulse resize-none"
+            className="w-full bg-charcoal text-pure-white border border-white/10 rounded-[10px] p-4 text-base placeholder:text-pure-white/50 focus:outline-none focus:border-neon-pulse resize-none"
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -64,7 +64,7 @@ export default function AskPanel({ wallet }) {
             <label htmlFor="ask-budget" className="eyebrow text-pure-white/50 block mb-2">BUDGET (μUSDC)</label>
             <input id="ask-budget" value={budget} onChange={(e) => setBudget(e.target.value)}
               className="w-full bg-charcoal text-pure-white border border-white/10 rounded-[10px] p-3 focus:outline-none focus:border-neon-pulse" />
-            <p className="text-xs text-pure-white/40 mt-1">Job price on testnet = 1,000,000 (1 USDC). Escrowed on the Diamond.</p>
+            <p className="text-xs text-pure-white/60 mt-1">Job price on testnet = 1,000,000 (1 USDC). Escrowed on the Diamond.</p>
           </div>
         </div>
         <button className="btn-pill-primary w-full md:w-auto" onClick={submit}
@@ -94,7 +94,7 @@ export default function AskPanel({ wallet }) {
           <p className="text-red-300 font-medium">{error.message}</p>
           {error.retry && <p className="text-pure-white/60 mt-1">Retry: {error.retry}</p>}
           {error.code && error.code !== 'UNKNOWN_PROTOCOL_ERROR' && (
-            <p className="text-pure-white/30 mt-2 font-mono text-xs">{error.code}</p>
+            <p className="text-pure-white/50 mt-2 font-mono text-xs">{error.code}</p>
           )}
         </div>
       )}

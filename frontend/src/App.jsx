@@ -104,7 +104,7 @@ export default function App() {
             <span className="w-2 h-2 rounded-full bg-neon-pulse pulse-dot" />
             <span className="eyebrow text-pure-white/50">DOCKET — RECORDS WHAT THE NETWORK RETURNED. NEVER DECLARES TRUTH.</span>
           </div>
-          <span className="eyebrow text-pure-white/30">BASE SEPOLIA · TELEGRAPH ERC-8183</span>
+          <span className="eyebrow text-pure-white/50">BASE SEPOLIA · TELEGRAPH ERC-8183</span>
         </div>
       </footer>
     </div>
