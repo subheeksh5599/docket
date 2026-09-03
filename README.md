@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="assets/cover.png" alt="DOCKET — Put a question on the record. The Telegraph network resolves it on-chain; the receipt is minted, immutable, independently verifiable." width="100%" />
-
 &nbsp;
 
 # DOCKET
