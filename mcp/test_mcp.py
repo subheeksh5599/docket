@@ -115,6 +115,40 @@ class MCPCoreTests(unittest.TestCase):
         res = m.verify_docket_answer(28, answer)
         self.assertFalse(res["match"])
 
+    def test_trace_provenance_graph(self):
+        m.eth_call = lambda to, data, rpc: self._receipt_hex(24)
+        res = m.trace_docket_receipt(24)
+        self.assertIn("provenance", res)
+        self.assertEqual(res["receipt"]["jobId"], 24)
+        self.assertTrue(res["question"]["committed_before_resolution"])
+        self.assertTrue(res["answer"]["present"])
+        self.assertEqual(res["chain"]["id"], 84532)
+        self.assertIn("question ->", res["provenance"])
+
+    def test_assess_internally_valid(self):
+        m.eth_call = lambda to, data, rpc: self._receipt_hex(24)
+        res = m.assess_docket_receipt(24)
+        self.assertTrue(res["internally_valid"])
+        self.assertTrue(res["locked"])
+        self.assertTrue(res["safe_to_consume"])  # no freshness policy -> fresh
+        self.assertIn("never declares", res["note"])
+
+    def test_assess_freshness_policy(self):
+        # receipt createdAt is 1788355510 (~old); max_age_seconds tiny => stale
+        m.eth_call = lambda to, data, rpc: self._receipt_hex(24)
+        res = m.assess_docket_receipt(24, max_age_seconds=1)
+        self.assertTrue(res["internally_valid"])
+        self.assertFalse(res["fresh"])
+        self.assertFalse(res["safe_to_consume"])  # immutable but NOT currently consumable
+
+    def test_assess_intent_policy(self):
+        m.eth_call = lambda to, data, rpc: self._receipt_hex(24)
+        good = m.assess_docket_receipt(24, required_intent="0x2a50af6c2576add2d054c7dd3176ae33bf33b67d0b2eb9c6f8bd6f4f53a1d51a")
+        self.assertTrue(good["intent_matches"])
+        bad = m.assess_docket_receipt(24, required_intent="0x" + "11" * 32)
+        self.assertFalse(bad["intent_matches"])
+        self.assertFalse(bad["safe_to_consume"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

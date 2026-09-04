@@ -44,8 +44,10 @@ Works with Claude Desktop / any MCP client via stdio. Point the client at:
 | `verify_docket_receipt` | `job_id: int` | `{receipt, resolved, locked, question_commitment_matches, verified}` |
 | `get_docket_receipt` | `job_id: int` | the full on-chain receipt struct |
 | `verify_docket_answer` | `job_id: int`, `answer: object` | `{answer_hash, stored_commitment, match}` |
+| `trace_docket_receipt` | `job_id: int` | full provenance graph: question → job → settlement → callback → answer → receipt |
+| `assess_docket_receipt` | `job_id: int`, optional `required_intent`, `max_age_seconds` | structured facts: `internally_valid`, `safe_to_consume` — with an explicit note that DOCKET never declares the answer true |
 
-All three default the registry from `DOCKET_REGISTRY` env or the compiled-in
+All five default the registry from `DOCKET_REGISTRY` env or the compiled-in
 canonical address. RPC defaults to `https://sepolia.base.org` (override with
 `DOCKET_RPC`), and the verifier fails over across public RPCs.
 

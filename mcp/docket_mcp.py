@@ -247,6 +247,77 @@ def _respond_error(req_id, code, message):
     sys.stdout.flush()
 
 
+def trace_docket_receipt(job_id):
+    """Return the full provenance graph for a receipt: question -> job -> event -> receipt."""
+    if not isinstance(job_id, int) or job_id <= 0:
+        return {"error": "job_id must be a positive integer"}
+    err = call_with_failover(call_get_receipt, job_id)
+    if isinstance(err, str):
+        return {"error": "could not read chain: %s" % err}
+    r = err
+    locked = None
+    lerr = call_with_failover(call_locked, job_id)
+    locked = lerr if isinstance(lerr, bool) else None
+    return {
+        "question": {"commitment": r["questionHash"], "committed_before_resolution": r["questionHash"] != "0x" + "00" * 64},
+        "job": {"id": r["jobId"], "intent": r["intentId"], "terminal": r["resolved"]},
+        "settlement": {"callback_minted": r["resolved"], "locked": locked},
+        "answer": {"commitment": r["answerHash"], "present": r["answerHash"] != "0x" + "00" * 64},
+        "receipt": {"jobId": r["jobId"], "createdAt": r["createdAt"], "resolved": r["resolved"]},
+        "chain": {"id": CHAIN_ID, "network": "base-sepolia"},
+        "provenance": "question -> questionHash -> Telegraph job -> resolver settlement -> callback -> answerHash -> receipt",
+    }
+
+
+def assess_docket_receipt(job_id, required_intent=None, max_age_seconds=None):
+    """Assess whether a receipt is INTERNALLY VALID and safe for a consumer to act on.
+
+    Answers 'is this record internally consistent and consumable?' — NEVER
+    'is the AI answer true?'. Optional consumer policy: required_intent hash
+    and max_age_seconds (freshness).
+    """
+    if not isinstance(job_id, int) or job_id <= 0:
+        return {"error": "job_id must be a positive integer"}
+    err = call_with_failover(call_get_receipt, job_id)
+    if isinstance(err, str):
+        return {"error": "could not read chain: %s" % err}
+    r = err
+    locked = None
+    lerr = call_with_failover(call_locked, job_id)
+    locked = lerr if isinstance(lerr, bool) else None
+
+    exists = r["jobId"] != 0 or r["questionHash"] != "0x" + "00" * 64
+    receipt_locked = bool(locked)
+    job_terminal = bool(r["resolved"])
+    question_bound = r["questionHash"] != "0x" + "00" * 64
+    answer_present = r["answerHash"] != "0x" + "00" * 64
+    internally_valid = bool(exists and receipt_locked and job_terminal and question_bound and answer_present)
+
+    intent_ok = True
+    if required_intent:
+        intent_ok = (r["intentId"] == required_intent)
+
+    fresh = True
+    if max_age_seconds is not None:
+        import time
+        now = int(time.time())
+        fresh = (now - r["createdAt"]) <= max_age_seconds
+
+    return {
+        "receipt_exists": exists,
+        "locked": receipt_locked,
+        "telegraph_job_exists": job_terminal,
+        "job_terminal": job_terminal,
+        "question_commitment_present": question_bound,
+        "answer_commitment_present": answer_present,
+        "internally_valid": internally_valid,
+        "intent_matches": intent_ok,
+        "fresh": fresh,
+        "safe_to_consume": bool(internally_valid and intent_ok and fresh),
+        "note": "DOCKET assesses internal record validity only. It never declares whether the network's answer is true.",
+    }
+
+
 def main():
     if "--self-test" in sys.argv:
         # offline sanity: keccak vector + the canonical receipt-#28 hash vector
@@ -288,6 +359,20 @@ def main():
             "description": "Re-hash an answer payload (OnChainData object: addresses[], integers[], strings[], bools[]) and compare against the stored on-chain commitment. Detects tampering.",
             "inputSchema": {"type": "object", "properties": {"job_id": {"type": "integer"}, "answer": {"type": "object"}}, "required": ["job_id", "answer"]},
         },
+        {
+            "name": "trace_docket_receipt",
+            "description": "Return the full provenance graph for a receipt: question commitment -> Telegraph job -> settlement/callback -> answer commitment -> locked receipt. For agents that need the whole chain of custody, not just a verdict.",
+            "inputSchema": {"type": "object", "properties": {"job_id": {"type": "integer", "description": "DOCKET job id (receipt number)"}}, "required": ["job_id"]},
+        },
+        {
+            "name": "assess_docket_receipt",
+            "description": "Assess whether a receipt is internally valid and safe for a consumer to act on. Optional policy: required_intent (bytes32 hash) and max_age_seconds (freshness). Answers 'is the record internally consistent?' — NEVER 'is the answer true?'.",
+            "inputSchema": {"type": "object", "properties": {
+                "job_id": {"type": "integer", "description": "DOCKET job id (receipt number)"},
+                "required_intent": {"type": "string", "description": "Optional intent hash the receipt must match (e.g. CRYPTO_PRICE intent)"},
+                "max_age_seconds": {"type": "integer", "description": "Optional max age for freshness (e.g. 60 for a price receipt)"},
+            }, "required": ["job_id"]},
+        },
     ]
 
     for line in sys.stdin:
@@ -317,6 +402,10 @@ def main():
                 result = get_docket_receipt(args.get("job_id"))
             elif name == "verify_docket_answer":
                 result = verify_docket_answer(args.get("job_id"), args.get("answer"))
+            elif name == "trace_docket_receipt":
+                result = trace_docket_receipt(args.get("job_id"))
+            elif name == "assess_docket_receipt":
+                result = assess_docket_receipt(args.get("job_id"), args.get("required_intent"), args.get("max_age_seconds"))
             else:
                 _respond_error(rid, -32601, "unknown tool: %s" % name)
                 continue

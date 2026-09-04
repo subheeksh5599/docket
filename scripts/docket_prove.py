@@ -135,7 +135,8 @@ def run_prove(job_id, registry, rpcs, answer_json=None, latest_override=None):
             ok = bool(rec["resolved"] and locked and rec["questionHash"] != "0x" + "00" * 64 and rec["answerHash"] != "0x" + "00" * 64)
             entry.update(status="pass" if ok else "fail",
                          detail={"resolved": rec["resolved"], "locked": locked,
-                                 "questionHash": rec["questionHash"], "answerHash": rec["answerHash"]})
+                                 "questionHash": rec["questionHash"], "answerHash": rec["answerHash"],
+                                 "intentId": rec["intentId"], "createdAt": rec["createdAt"]})
             consensus.append(ok)
             if answer_json:
                 from docket_verify import canonical_onchain_hash  # reuse verified encoder
